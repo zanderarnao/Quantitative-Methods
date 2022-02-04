@@ -1,0 +1,33 @@
+---
+title: "Assignment 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Quantitative Methods in Public Policy Assignment 2
+
+**5.1) Run a regression with earnings as the dependent variable and schooling as the sole independent variable. Interpret the coefficients.** 
+
+**5.2) Suppose you wanted a parsimonious way to predict earnings using only years of schooling. What would you do?**
+
+**5.3) Let’s dig more deeply into whether the relationship between earning and schooling insappromixaltely linear.**
+
+**Start by making a scatter plot. Then plot the predicted values from your regression along with the raw data points, as we did in chapter 2. Does the regression line look like it’s fitting the data well?**
+
+**Now run a fourth- order polynomial regression (i.e.g, including schooling, schooling squared, schooling to the third, and schooling to the fourth). Do those predictions meaningfully differ from the predictions coming from the linear regression?**
+
+**Now run different regressions for some different ranges of schooling. Do those lines look meaningfully different from the predictions you get from a single regression including all the data?**
+
+**Does all this make you think the simple linear approach was reasonable or unreasonable?**
+
+**5.4) Similar to what we did with age and voter turnout, conduct some out-of-sample tests to evaluate your prediction strategy. Using only data from those with twelve years of schooling or less, see how well your different strategies from question 3 perform when predicting earnings for those with more than twelve years of schooling.**
+
+**5.5). Drop one observation, run a regression to try to predict the outcome for that missing observation, and see how far you were. Repeat this for each observation in the data set (you should be able to do this with a loop) and average your errors. Try different strategies to see which one gives you the best out-of-sample predictions.**
+
+
+```{r code}
+summary(cars)
+```
