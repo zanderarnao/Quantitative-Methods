@@ -13,15 +13,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 **5.2) Suppose you wanted a parsimonious way to predict earnings using only years of schooling. What would you do?**
 
-**5.3) Let’s dig more deeply into whether the relationship between earning and schooling insappromixaltely linear.**
+**5.3) Let’s dig more deeply into whether the relationship between earning and schooling is approximately linear.**
 
-**Start by making a scatter plot. Then plot the predicted values from your regression along with the raw data points, as we did in chapter 2. Does the regression line look like it’s fitting the data well?**
+**a) Start by making a scatter plot. Then plot the predicted values from your regression along with the raw data points, as we did in chapter 2. Does the regression line look like it’s fitting the data well?**
 
-**Now run a fourth- order polynomial regression (i.e.g, including schooling, schooling squared, schooling to the third, and schooling to the fourth). Do those predictions meaningfully differ from the predictions coming from the linear regression?**
+**b) Now run a fourth- order polynomial regression (i.e.g, including schooling, schooling squared, schooling to the third, and schooling to the fourth). Do those predictions meaningfully differ from the predictions coming from the linear regression?**
 
-**Now run different regressions for some different ranges of schooling. Do those lines look meaningfully different from the predictions you get from a single regression including all the data?**
+**c) Now run different regressions for some different ranges of schooling. Do those lines look meaningfully different from the predictions you get from a single regression including all the data?**
 
-**Does all this make you think the simple linear approach was reasonable or unreasonable?**
+**d) Does all this make you think the simple linear approach was reasonable or unreasonable?**
 
 **5.4) Similar to what we did with age and voter turnout, conduct some out-of-sample tests to evaluate your prediction strategy. Using only data from those with twelve years of schooling or less, see how well your different strategies from question 3 perform when predicting earnings for those with more than twelve years of schooling.**
 
@@ -29,5 +29,32 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r code}
-summary(cars)
+
+# configure figures for aesthetics
+knitr::opts_chunk$set(echo = TRUE, fig.width = 12, fig.height = 8)
+
+# install requisite packages
+# install.packages(tidyverse)
+# install.packages(rvest)
+# install.packages(RColorBrewer)
+# install.packages(tidytext)
+# install.packages(knitr)
+# install.packages(downloader)
+# install.packages(here)
+
+# save requisite packages to library
+library(tidyverse)
+library(rvest)
+library(RColorBrewer)
+library(tidytext)
+library(knitr)
+library(downloader)
+library(here)
+
+# save data to variable
+schooling_data <- read.csv(here("Files for Data Exercises/SchoolingEarnings.csv"))
+  # note here() removes the need to set a working directory by X
+
+
+
 ```
