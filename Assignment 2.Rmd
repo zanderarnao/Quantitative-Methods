@@ -51,10 +51,33 @@ library(knitr)
 library(downloader)
 library(here)
 
+# show explainer of data for future reference (from the associated read_me)
+# "Angrist and Krueger obtained their data from the Integrated Public Use
+# Microdata Series from the 1980 U.S. Census.
+
+# The study specifically focused on men born between 1930 and 1939, so they
+# were 41-50 years old at the time of data collection.
+
+# Each row corresponds to a large group of men with the same level of
+# schooling.
+
+# The variable "schooling" indicates the years of schooling for each group.
+# 12 corresponds with high school completion, and 16 corresponds with 
+# college completion.
+
+# The variable "earnings" indicates the average annual earnings (in 1980
+# U.S. dollars) for the men in each group."
+
 # save data to variable
 schooling_data <- read.csv(here("Files for Data Exercises/SchoolingEarnings.csv"))
   # note here() removes the need to set a working directory by X
 
+# visualize data in a scatter plot
+schooling_data %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  geom_smooth(method = lm)
 
+# fit a regression line
 
 ```
