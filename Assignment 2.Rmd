@@ -195,5 +195,38 @@ ggplot() +
   geom_point(data = out_of_sample, 
     aes(x = schooling, y = earnings), color = "red") + 
   geom_segment(aes(x = 0, y = 12.41659, xend = 3, yend = 12.45874)) + 
-  geom_segment(aes(x = 4, y = 13.01128, xend = 20, yend = 27.42408))
+  geom_segment
+
+# calculate average error using a linear and fourth-order regression
+
+# Where to store the square errors for model 1?
+errors1 <- c()
+
+# Where to store the square errors for model 2?
+errors2 <- c()
+
+# for loop
+for (i in c(1:21)){
+  
+  ### Lets split our data into training and testing
+  training <- schooling_data[-i, ]
+  testing <- schooling_data[i, ]
+  
+  ### Model 1
+  linear = lm(earnings ~ schooling, data = training)
+  temp <- (testing$earnings - predict(linear, testing))^2
+  errors1 <- c(errors1, temp)
+  
+  ### Model 2
+  # now re-estimate model 2 with the new training data
+  fourth_order = lm(earnings ~ poly(schooling, 4, raw=TRUE), data = training)
+  temp <- (testing$earnings - predict(fourth_order, testing))^2
+  errors2 <- c(errors2, temp)
+  
+}
+
+# Now we can see which model has smaller mean squared errors on average
+mean(errors1)
+mean(errors2)
+
 ```
