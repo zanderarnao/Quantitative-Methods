@@ -74,7 +74,7 @@ schooling_data <- read.csv(here("Files for Data Exercises/SchoolingEarnings.csv"
 
 # fit a regression line
 regression <- lm(data = schooling_data, earnings ~ schooling)
-summary(regression1)
+summary(regression)
 
 # visualize data in a scatter plot with a regression line
 schooling_data %>% 
@@ -89,6 +89,35 @@ schooling_data %>%
   geom_smooth(method = lm, se = TRUE,
               formula = y ~ poly(x, 4, raw=TRUE))
 
+# visualize data in a scatter plot with a segmented regression
+schooling_data %>% 
+  ggplot(aes(x = schooling, y = earnings, group = )) + 
+  geom_point() + 
+  geom_smooth(method = lm, se = TRUE,
+              formula = y ~ poly(x, 4, raw=TRUE))
 
+
+#separate data frame into three groups and append group number
+schooling_elem <- schooling_data %>%
+  filter(schooling < 6) %>% 
+  mutate(group = 1)
+
+schooling_college <- schooling_data %>%
+  filter(5 < schooling & schooling < 16) %>% 
+  mutate(group = 2)
+
+schooling_post <- schooling_data %>% 
+  filter(15 < schooling) %>% 
+  mutate(group = 3)
+
+schooling_final <- schooling_elem %>% 
+  full_join(schooling_college) %>% 
+  full_join(schooling_post)
+
+# plot segmented linear regression for three buckets of schooling
+schooling_final %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  geom_smooth(aes(group = group), method = lm)
 
 ```
