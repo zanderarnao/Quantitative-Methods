@@ -82,20 +82,17 @@ schooling_data %>%
   geom_point() + 
   geom_smooth(method = lm)
 
+# fit a fourth-order regression
+regression1 <- lm(data = schooling_data, 
+  earnings ~ poly(schooling, 4, raw=TRUE))
+summary(regression1)
+
 # visualize data in a scatter plot with a fourth-order regression
 schooling_data %>% 
   ggplot(aes(x = schooling, y = earnings)) + 
   geom_point() + 
   geom_smooth(method = lm, se = TRUE,
               formula = y ~ poly(x, 4, raw=TRUE))
-
-# visualize data in a scatter plot with a segmented regression
-schooling_data %>% 
-  ggplot(aes(x = schooling, y = earnings, group = )) + 
-  geom_point() + 
-  geom_smooth(method = lm, se = TRUE,
-              formula = y ~ poly(x, 4, raw=TRUE))
-
 
 #separate data frame into three groups and append group number
 schooling_elem <- schooling_data %>%
@@ -114,7 +111,20 @@ schooling_final <- schooling_elem %>%
   full_join(schooling_college) %>% 
   full_join(schooling_post)
 
-# plot segmented linear regression for three buckets of schooling
+# fit a segmented regression
+# for group 1
+regression2 <- lm(data = schooling_elem, earnings ~ schooling)
+summary(regression2)
+
+# for group 2 
+regression3 <- lm(data = schooling_college, earnings ~ schooling)
+summary(regression3)
+
+# for group 3
+regression4 <- lm(data = schooling_post, earnings ~ schooling)
+summary(regression4)
+
+# plot segmented linear regression
 schooling_final %>% 
   ggplot(aes(x = schooling, y = earnings)) + 
   geom_point() + 
