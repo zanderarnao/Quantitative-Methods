@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Quantitative Methods in Public Policy Assignment 2
 
-Before moving into the body of this assignment, I will install requisite packages and save our data of interest as an object. I also edit a few options to expand the size of resulting figures. 
+Before moving into the body of this assignment, I will install requisite packages and save our data of interest as an object. I also edit a few options to expand the size of resulting figures. Throughout the assignment, I alternative between commentary and relevant code. For convenience the code is compiled at the end of this document as well. 
 
 ```{r packages and data}
 # configure options for figure aesthetics
@@ -65,13 +65,41 @@ With the data saved and options initialized, we now move into the required quest
 
 **5.1) Run a regression with earnings as the dependent variable and schooling as the sole independent variable. Interpret the coefficients.** 
 
-Below I run an ordinary least squares regression on the schooling data, resulting in a line of best fit. Here schooling serves as the independent variable and earnings as the dependent. I provide a table with the relevant regression parameters, the regression coefficient (beta) and the intercept (alpha). I visualize the regression line against a scatter plot of the data for helpful reference. 
+Below I run an ordinary least squares regression on the schooling data, resulting in a line of best fit. Here schooling serves as the independent variable and earnings as the dependent. I provide a table with the relevant regression parameters, the regression coefficient (beta) and the intercept (alpha). 
 
 ```{r problem 5.1}
 
 # fit a regression line to the schooling data and show a result with regression
 regression <- lm(data = schooling_data, earnings ~ schooling)
 summary(regression)
+
+```
+
+The regression coefficient and intercept are given in the table above. Beta is 1.16185, which is the slope of the regression line. Its sign is positive, which tells us that there is a positive correlation between years of schooling and earnings, i.e., that, on average, an increase in one variable is associated with an increase in the other.
+
+The specific magnitude of the correlation 1.16185, which means that the middle aged men in our data, each additional year of schooling corresponds, on average, to an increase in income by approximately $1,161.85 (1980 dollars).
+
+Alpha is 8.79853, which tells us that the men in this cohort who received no years of schooling earned, on average, about $8,798.53 in 1980 dollars. 
+
+Now with the specific meaning of the regression parameters for the schooling data, we briefly discuss ... 
+
+**5.2) Suppose you wanted a parsimonious way to predict earnings using only years of schooling. What would you do?**
+
+For a parsimonious way to predict earnings using only years of schooling, I would run an ordinary least squares (OLS) regression of earnings on years of schooling. That is, years of schooling would serve as the explanatory variable and earnings the outcome of interest. Years of schooling would "explain" variation in earnings seen in the data.
+
+Provided that the relationship between the variables is approximately linear, this statistical test would give us a line that, based on years of schooling, summarizes change in earnings. OLS accomplishes this by finding the line which minimizes the total squared error, i.e, the distance between the observed and predicted values of earnings for every year of schooling. 
+
+OLS regression is useful because it is a parsimonious way to communicate the relationship between two or more variables. One could list all the years of schooling and their associated average earnings and draw conclusions about their relationship. However, this method would be time-consuming and heavy with information. 
+
+By contrast, OLS regression allows one to study this relationship without detailed reference to the observed data. OLS regression provides a mathematical model which gives highly useful information, including the direction (positive, negative, or none) of the relationship and a sense of its magnitude. This information can have a number of uses, including for description, prediction, and causal assessment of a number of features within the world. Running an OLS regression between years of schooling and earnings may furnish knowledge about their relationship useful for other contexts (e.g. observations not currently part of our data)
+
+It is also worth briefly comparing OLS regression to higher order regressions. Higher order regressions add additional explanatory variables to the process (e.g. college major as an explainer of income), and while sometimes this can be useful (particularly when the data is the relationship is non-linear), it adds dimensionality and complexity, which can reduce the parsimony of the summary. A regression equation with ten explanatory variables is likely not much more useful than listing or visualizing the data and assessing its 
+
+We can apply it here to find a parsimonious summary of the relationship between year of schooling and earnings. The specific meaning of identified regression coefficient and intercept are elaborated above. We not dig into whether the relationship between years of schooling and earnings is actually linear.  
+
+**5.3) Let’s dig more deeply into whether the relationship between earning and schooling is approximately linear.**
+
+```{r linear regression}
 
 # visualize the regression line in a scatter plot with a regression line
 schooling_data %>% 
@@ -84,18 +112,7 @@ schooling_data %>%
     y = "Earnings") + 
   scale_fill_brewer(palette = "Set3") +
   theme_bw()
-
 ```
-
-The regression coefficient and intercept are given in the table above. Beta is 1.16185, which is the slope of the regression line. Its sign is positive, which tells us that there is a positive correlation between years of schooling and earnings, i.e., that, on average, an increase in one variable is associated with an increase in the other.
-
-The specific magnitude of the correlation 1.16185, which means that the middle aged men in our data, each additional year of schooling corresponds, on average, to an increase in income by approximately $1,161.85 (1980 dollars).
-
-Alpha is 8.79853, which tells us that the men in this cohort who received no years of schooling earned, on average, about $8,798.53 in 1980 dollars. 
-
-**5.2) Suppose you wanted a parsimonious way to predict earnings using only years of schooling. What would you do?**
-
-**5.3) Let’s dig more deeply into whether the relationship between earning and schooling is approximately linear.**
 
 **a) Start by making a scatter plot. Then plot the predicted values from your regression along with the raw data points, as we did in chapter 2. Does the regression line look like it’s fitting the data well?**
 
