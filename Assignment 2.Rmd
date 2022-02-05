@@ -194,6 +194,6 @@ ggplot() +
     aes(x = schooling, y = earnings), color = "green") + 
   geom_point(data = out_of_sample, 
     aes(x = schooling, y = earnings), color = "red") + 
-  geom_function(fun = function(x) -0.01405 * x + 12.45874) + 
-  geom_function(fun = function(x) 0.90080 * x + 9.40808)
+  geom_segment(aes(x = 0, y = 12.41659, xend = 3, yend = 12.45874)) + 
+  geom_segment(aes(x = 4, y = 13.01128, xend = 20, yend = 27.42408))
 ```
