@@ -130,4 +130,59 @@ schooling_final %>%
   geom_point() + 
   geom_smooth(aes(group = group), method = lm)
 
+# create in and out of sample data
+in_sample <- schooling_data %>% 
+  filter(schooling < 13)
+
+out_of_sample <- schooling_data %>% 
+  filter(12 < schooling)
+
+# fit linear regression to in_sample data
+regression5 <- lm(data = in_sample, earnings ~ schooling)
+summary(regression5)
+
+# plot linear regression from in_sample data
+in_sample %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  geom_smooth(method = lm)
+
+# fit fourth order regression to in_sample data
+regression6 <- lm(data = in_sample, 
+  earnings ~ poly(schooling, 4, raw=TRUE))
+summary(regression6)
+
+# plot fourth-order regression from in_sample data
+in_sample %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  geom_smooth(method = lm, se = TRUE,
+              formula = y ~ poly(x, 4, raw=TRUE))
+
+#separate in_sample data into two groups and append group number
+in_sample_g1 <- in_sample %>%
+  filter(schooling < 4) %>% 
+  mutate(group = 1)
+
+in_sample_g2 <- in_sample %>%
+  filter(3 < schooling) %>% 
+  mutate(group = 2)
+
+in_sample_segmented <- in_sample_g1 %>% 
+  full_join(in_sample_g2) 
+
+# fit a segmented regression to in_sample data
+# for group 1
+regression7 <- lm(data = in_sample_g1, earnings ~ schooling)
+summary(regression7)
+
+# for group 2 
+regression8 <- lm(data = in_sample_g2, earnings ~ schooling)
+summary(regression8)
+
+# plot segmented linear regression
+in_sample_segmented %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  geom_smooth(aes(group = group), method = lm)
 ```
