@@ -137,27 +137,35 @@ in_sample <- schooling_data %>%
 out_of_sample <- schooling_data %>% 
   filter(12 < schooling)
 
-# fit linear regression to in_sample data
+# fit linear regression to in_sample data 
 regression5 <- lm(data = in_sample, earnings ~ schooling)
 summary(regression5)
 
-# plot linear regression from in_sample data
-in_sample %>% 
-  ggplot(aes(x = schooling, y = earnings)) + 
-  geom_point() + 
-  geom_smooth(method = lm)
+# plot linear regression from in sample data showing out of sample data
+ggplot() + 
+  geom_point(data = in_sample, 
+    aes(x = schooling, y = earnings), color = "green") + 
+  geom_point(data = out_of_sample, 
+    aes(x = schooling, y = earnings), color = "red") + 
+  geom_function(fun = function(x) 0.70967 * x + 11.07127)
+  
 
 # fit fourth order regression to in_sample data
 regression6 <- lm(data = in_sample, 
   earnings ~ poly(schooling, 4, raw=TRUE))
 summary(regression6)
 
-# plot fourth-order regression from in_sample data
-in_sample %>% 
-  ggplot(aes(x = schooling, y = earnings)) + 
-  geom_point() + 
-  geom_smooth(method = lm, se = TRUE,
-              formula = y ~ poly(x, 4, raw=TRUE))
+# plot fourth-order regression from in sample data showing out of sample data
+ggplot() + 
+  geom_point(data = in_sample, 
+    aes(x = schooling, y = earnings), color = "green") + 
+  geom_point(data = out_of_sample, 
+    aes(x = schooling, y = earnings), color = "red") + 
+  geom_function(fun = function(x) -0.5514305 * x + 
+                  0.2408554 * x^2 + 
+                  -0.0185683 * x^3 + 
+                  0.0005741 * x^4 +
+                  12.6042321)
 
 #separate in_sample data into two groups and append group number
 in_sample_g1 <- in_sample %>%
@@ -180,9 +188,12 @@ summary(regression7)
 regression8 <- lm(data = in_sample_g2, earnings ~ schooling)
 summary(regression8)
 
-# plot segmented linear regression
-in_sample_segmented %>% 
-  ggplot(aes(x = schooling, y = earnings)) + 
-  geom_point() + 
-  geom_smooth(aes(group = group), method = lm)
+# plot segmented linear regression showing out of sample data
+ggplot() + 
+  geom_point(data = in_sample, 
+    aes(x = schooling, y = earnings), color = "green") + 
+  geom_point(data = out_of_sample, 
+    aes(x = schooling, y = earnings), color = "red") + 
+  geom_function(fun = function(x) -0.01405 * x + 12.45874) + 
+  geom_function(fun = function(x) 0.90080 * x + 9.40808)
 ```
