@@ -99,9 +99,28 @@ We can apply it here to find a parsimonious summary of the relationship between 
 
 **5.3) Let’s dig more deeply into whether the relationship between earning and schooling is approximately linear.**
 
-```{r linear regression}
+**a) Start by making a scatter plot. Then plot the predicted values from your regression along with the raw data points, as we did in chapter 2. Does the regression line look like it’s fitting the data well?**
 
-# visualize the regression line in a scatter plot with a regression line
+First we show a scatter plot of the data. 
+
+```{r scatter plot}
+
+# visualize a scatter plot of the data
+schooling_data %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  labs(
+    title = "Years of schooling versus earned income",
+    x = "Years of Schooling",
+    y = "Earnings") + 
+  scale_fill_brewer(palette = "Set3") +
+  theme_bw()
+```
+
+At first blush, the data appear somewhat linear, so we visualize an OLS regression line on the plot. 
+
+```{r regression line}
+# visualize the regression line on a scatter plot
 schooling_data %>% 
   ggplot(aes(x = schooling, y = earnings)) + 
   geom_point() + 
@@ -114,13 +133,102 @@ schooling_data %>%
   theme_bw()
 ```
 
-**a) Start by making a scatter plot. Then plot the predicted values from your regression along with the raw data points, as we did in chapter 2. Does the regression line look like it’s fitting the data well?**
+The OLS regression appears to reasonably fit the data. It is noticeable, however, that over certain intervals the data are uniformly above or below the regression line. This might make us question whether the relationship is linear. 
 
 **b) Now run a fourth-order polynomial regression (i.e., including schooling, schooling squared, schooling to the third, and schooling to the fourth). Do those predictions meaningfully differ from the predictions coming from the linear regression?**
 
+To further elucidate whether the variables are linearly associated, I run a fourth-order polynomial regression on earnings and years of schooling at first, second, third, and fourth powers. I show the regression parameters and a fit a regression line to a scatter plot below. 
+
+```{r fourth order polynomial regression}
+# fit a fourth-order regression and show the regression parameters
+regression1 <- lm(data = schooling_data, 
+  earnings ~ poly(schooling, 4, raw=TRUE))
+summary(regression1)
+
+# visualize a fourth-order line of best fit to a scatter plot of the data
+schooling_data %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  geom_smooth(color = "purple", method = lm, se = TRUE,
+              formula = y ~ poly(x, 4, raw=TRUE)) + 
+  labs(
+    title = "Association between years of schooling and earned income",
+    x = "Years of Schooling",
+    y = "Earnings") + 
+  scale_fill_brewer(palette = "Set3") +
+  theme_bw()
+
+````
+
+The predictions meaningfully differ from the linear regression line. For for certain intervals of the data, a linear regression gave predictions that were systematically above or below the observed values. This is not the case for our fourth order polynomial regression. 
+
+In addition, there seems to be less error in the polynomial regression's predictions; the line (and therefore our predicitons) appears uniformly closer to the observed values than the linear regression. 
+
 **c) Now run different regressions for some different ranges of schooling. Do those lines look meaningfully different from the predictions you get from a single regression including all the data?**
 
+We now further test the linearity of the data by regression different ranges of schooling. Comparing the linear regression against the scattered observations, there appear to be three distinct intervals (years 0 to 4, 5 to 15, and 16 to 20). The observations are systematically above, below, and above the predictions made by the line of best fit. 
+
+In addition, the relationship between earnings and schooling  appear to be roughly linear within each of those intervals. Earnings tend to increase very slowly, if at all, from years 0 to 4, then steadily from 5 to 16, and sporadically from 17 to 20. This makes sense because these years correspond to distinct phases of a person's education. Years 0 to 4 are elementary/primary school; 5 to 15 are intermediate, secondary, and college; and 16 to 20 are post-graduate. It is reasonable to think that associations with changes in income will be different across these three groups. 
+
+In light of this, I run a segmented linear regression, that is, I plot a separate line of best fit for each of these intervals. In addition, I show a table with relevant regression parameters and visualize all three lines of best fit on a scatter plot. I start by separating the data into these three groups. 
+
+```{r segement the data}
+#separate the data into three groups and append a group id
+schooling_g1 <- schooling_data %>%
+  filter(schooling < 6) %>% 
+  mutate(group = 1)
+
+schooling_g2 <- schooling_data %>%
+  filter(5 < schooling & schooling < 16) %>% 
+  mutate(group = 2)
+
+schooling_g3 <- schooling_data %>% 
+  filter(15 < schooling) %>% 
+  mutate(group = 3)
+
+# re-join them for later graphing
+schooling_rejoined <- schooling_g1 %>% 
+  full_join(schooling_g2) %>% 
+  full_join(schooling_g3)
+
+```
+
+Defining three new data sets permits running a linear regression on each. Recombining them facilitates graphing on a common scatter plot. I perform these actions below. 
+
+```{r segmented regression}
+
+# fit a separate linear regression for each group
+# for group 1
+regression2 <- lm(data = schooling_g1, earnings ~ schooling)
+summary(regression2)
+
+# for group 2 
+regression3 <- lm(data = schooling_g2, earnings ~ schooling)
+summary(regression3)
+
+# for group 3
+regression4 <- lm(data = schooling_g3, earnings ~ schooling)
+summary(regression4)
+
+# plot segmented linear regression
+schooling_rejoined %>% 
+  ggplot(aes(x = schooling, y = earnings)) + 
+  geom_point() + 
+  geom_smooth(aes(group = group), color = "purple", method = lm) + 
+  labs(
+    title = "Association between years of schooling and earned income",
+    x = "Years of Schooling",
+    y = "Earnings") + 
+  scale_fill_brewer(palette = "Set3") +
+  theme_bw()
+```
+The lines do look meaningfully different from a regression using all of the data. First, the regression line is not continuous, increasing a different rates depending on the year. Second, the predictions appear, in general, to be more accurate. There is no consistent direction of error as occurred in the first linear regression, and the observations appear to be much closer to the lines' predictions, though the fourth order polynomial regression is similarly accurate across the board. It is clear that segmenting the regression improves the accuracy of the predicted outcomes, though at the expense of some parsimony.  
+
 **d) Does all this make you think the simple linear approach was reasonable or unreasonable?**
+
+It makes me think the simple linear approach was unreasonable. The simple linear regression was the most parsimonious since we only have to bear two regression parameters (beta and alpha) in mind. However, this parsimony comes at the expense of accuracy; the predictions made by the linear regression had greater error (and in the same direction over certain intervals) than the fourth order polynomial and segmented regressions. 
+
+It does not appear that years of schooling and earnings are linearly assocaited. 
 
 **5.4) Similar to what we did with age and voter turnout, conduct some out-of-sample tests to evaluate your prediction strategy. Using only data from those with twelve years of schooling or less, see how well your different strategies from question 3 perform when predicting earnings for those with more than twelve years of schooling.**
 
