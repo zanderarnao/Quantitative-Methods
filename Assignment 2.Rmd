@@ -226,11 +226,123 @@ The lines do look meaningfully different from a regression using all of the data
 
 **d) Does all this make you think the simple linear approach was reasonable or unreasonable?**
 
-It makes me think the simple linear approach was unreasonable. The simple linear regression was the most parsimonious since we only have to bear two regression parameters (beta and alpha) in mind. However, this parsimony comes at the expense of accuracy; the predictions made by the linear regression had greater error (and in the same direction over certain intervals) than the fourth order polynomial and segmented regressions. 
+It makes me think the simple linear approach was unreasonable. The simple linear regression was the most parsimonious since we only have to bear two regression parameters (beta and alpha) in mind. However, this parsimony comes at the expense of accuracy; the predictions made by the linear regression had greater error (which was the same direction over certain intervals) than the fourth order polynomial and segmented regressions. 
 
-It does not appear that years of schooling and earnings are linearly assocaited. 
+It does not appear, therefore, that the relationship between years of schooling and earnings is approximately linear. While there is certainly a positive correlation, i.e. that earnings tends to increase with years of schooling on average, the magnitude of that change differs over time. This inconstancy indicates non-linearity, so a simple linear approach, though helpful, is inferior to higher order polynomial and segmented regression. 
 
 **5.4) Similar to what we did with age and voter turnout, conduct some out-of-sample tests to evaluate your prediction strategy. Using only data from those with twelve years of schooling or less, see how well your different strategies from question 3 perform when predicting earnings for those with more than twelve years of schooling.**
+
+To validate my conclusion above, I now compare the efficacy of alternative strategies to the simple linear approach. I do this by conducting some out-of-sample tests, that is, I will fit one simple linear, one fourth order polynomial, and one segmented linear regression to only the observations with 12 or less years of schooling. I show the relevant parameters for each regression via tables and then plot them on a common scatter plot. 
+
+Below I separate the data into two data frames (one for observations with less and one for those with more than 12 years of schooling) and then fit three regressions for the first group. I also recombine the two data sets to facilitate their graphing on a common scatter plot. 
+
+To make a complicated stretch of coding more manageable to read, I break it up with short sentences summarizing my transformations. I start by splitting the data into in sample and out of sample groups. 
+```{r split data}
+# create in and out of sample data
+in_sample <- schooling_data %>% 
+  filter(schooling < 13)
+
+out_of_sample <- schooling_data %>% 
+  filter(12 < schooling)
+
+```
+
+Now, I fit a simple linear model to the in sample data and test its predictions against the out of sample.
+
+```{r simple linear out of sample test}
+# fit a simple linear regression to in sample data 
+regression5 <- lm(data = in_sample, earnings ~ schooling)
+summary(regression5)
+
+# plot linear regression from in sample data showing out of sample data
+ggplot() + 
+  geom_point(data = in_sample, 
+    aes(x = schooling, y = earnings), color = "blue") + 
+  geom_point(data = out_of_sample, 
+    aes(x = schooling, y = earnings), color = "red") + 
+  geom_function(fun = function(x) 0.70967 * x + 11.07127, color = "purple") + 
+   labs(
+    title = "Association between years of schooling and earned income",
+    x = "Years of Schooling",
+    y = "Earnings") + 
+  scale_fill_brewer(palette = "Set3") +
+  theme_bw()
+  
+```
+It appears that a simple linear model fitted to the first twelve years of schooling is horribly predictive of out of sample data. While there is less error from years zero to 12 than there was along the simple linear regression of the entire data set, the observations are much higher than predicted when assuming linearity. This is further confirmation of my conclusion.   
+
+Below I fit a fourth order regression to the in sample data and test its predictions against the out of sample. 
+
+```{r fourth order out of sample test}
+# fit fourth order regression to in_sample data
+regression6 <- lm(data = in_sample, 
+  earnings ~ poly(schooling, 4, raw=TRUE))
+summary(regression6)
+
+# plot fourth-order regression from in sample data showing out of sample data
+ggplot() + 
+  geom_point(data = in_sample, 
+    aes(x = schooling, y = earnings), color = "blue") + 
+  geom_point(data = out_of_sample, 
+    aes(x = schooling, y = earnings), color = "red") + 
+  geom_function(fun = function(x) -0.5514305 * x + 
+                  0.2408554 * x^2 + 
+                  -0.0185683 * x^3 + 
+                  0.0005741 * x^4 +
+                  12.6042321, 
+                color = "purple") + 
+  labs(
+    title = "Association between years of schooling and earned income",
+    x = "Years of Schooling",
+    y = "Earnings") + 
+  scale_fill_brewer(palette = "Set3") +
+  theme_bw()
+```
+The fourth order polynomial regression has much less error than the simple linear model. While the out of sample predictions are not amazingly accurate, they are much closer to the observed outcomes than the simple linear model. In addition, they are not systematically below observed outcomes as they were with the simple linear model. This suggests a polynomial regression might be an effective strategy.   
+
+Finally, I separate the in sample data into two groups (group from years 0 to 3 and group 2 from years 4 to 12) and fit a linear regression to each segment. I then test its predictions (that of the regression from group 2) against the out of sample data. It is all visualized on a common scatter plot. 
+
+```{r segmented out of sample test}
+#separate in_sample data into two groups and append group number
+in_sample_g1 <- in_sample %>%
+  filter(schooling < 4) %>% 
+  mutate(group = 1)
+
+in_sample_g2 <- in_sample %>%
+  filter(3 < schooling) %>% 
+  mutate(group = 2)
+
+in_sample_segmented <- in_sample_g1 %>% 
+  full_join(in_sample_g2) 
+
+# fit a segmented regression to in_sample data
+# for group 1
+regression7 <- lm(data = in_sample_g1, earnings ~ schooling)
+summary(regression7)
+
+# for group 2 
+regression8 <- lm(data = in_sample_g2, earnings ~ schooling)
+summary(regression8)
+
+# plot segmented linear regression showing out of sample data
+ggplot() + 
+  geom_point(data = in_sample, 
+    aes(x = schooling, y = earnings), color = "green") + 
+  geom_point(data = out_of_sample, 
+    aes(x = schooling, y = earnings), color = "red") + 
+  geom_segment(aes(x = 0, y = 12.41659, xend = 3, yend = 12.45874), 
+               color = "orange") + 
+  geom_segment(aes(x = 4, y = 13.01128, xend = 20, yend = 27.42408), 
+               color = "purple") + 
+   labs(
+    title = "Association between years of schooling and earned income",
+    x = "Years of Schooling",
+    y = "Earnings") + 
+  scale_fill_brewer(palette = "Set3") +
+  theme_bw()
+
+```
+The segmented regression is not a desirable strategy either. Conceptually, if segments are found to be useful, i.e. that the data are linear at different intervals, then it makes little sense to assume linearity across the interval of out of sample predictions. However, this assumption is required, and the relative inaccuracy of predictions is the result. The segmented linear regression is less off the mark than the simple linear model, but its predictions are still systematically too low. The polynomial regression is better on both fronts and it thus the preferred strategy between these three alternatives.
 
 **5.5). Drop one observation, run a regression to try to predict the outcome for that missing observation, and see how far you were. Repeat this for each observation in the data set (you should be able to do this with a loop) and average your errors. Try different strategies to see which one gives you the best out-of-sample predictions.**
 
@@ -401,8 +513,7 @@ ggplot() +
     aes(x = schooling, y = earnings), color = "green") + 
   geom_point(data = out_of_sample, 
     aes(x = schooling, y = earnings), color = "red") + 
-  geom_segment(aes(x = 0, y = 12.41659, xend = 3, yend = 12.45874)) + 
-  geom_segment
+  geom_segment(aes(x = 0, y = 12.41659, xend = 3, yend = 12.45874)) 
 
 # calculate average error using a linear and fourth-order regression
 
