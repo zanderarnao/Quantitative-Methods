@@ -346,6 +346,72 @@ The segmented regression is not a desirable strategy either. Conceptually, if se
 
 **5.5). Drop one observation, run a regression to try to predict the outcome for that missing observation, and see how far you were. Repeat this for each observation in the data set (you should be able to do this with a loop) and average your errors. Try different strategies to see which one gives you the best out-of-sample predictions.**
 
+Though we can now prefer a strategy of polynomial regression over simple or segmented linear models, we can verify this preference even more rigorously. Below I loop through every data point, drop each point from the data, fit a model to the remaining observations, and then compare the mean error (i.e. difference between actual and predicted outcome). I do this for a simple linear and second, third, fourth, and fifth order polynomial. I report and compare each of their standard errors to select a preferred model.  
+
+```{r}
+# calculate average error using a linear and fourth-order regression
+
+# Where to store the square errors for model 1?
+errors1 <- c()
+
+# Where to store the square errors for model 2?
+errors2 <- c()
+
+# Where to store the square errors for model 2?
+errors3 <- c()
+
+# Where to store the square errors for model 2?
+errors4 <- c()
+
+# Where to store the square errors for model 2?
+errors5 <- c()
+
+# for loop
+for (i in c(1:21)){
+  
+  # split the data into training and testing
+  training <- schooling_data[-i, ]
+  testing <- schooling_data[i, ]
+  
+  # simple linear model
+  linear = lm(earnings ~ schooling, data = training)
+  temp <- (testing$earnings - predict(linear, testing))^2
+  errors1 <- c(errors1, temp)
+  
+  # second order model
+  second_order = lm(earnings ~ poly(schooling, 2, raw=TRUE), data = training)
+  temp <- (testing$earnings - predict(second_order, testing))^2
+  errors2 <- c(errors2, temp)
+  
+  # third order model 
+  third_order = lm(earnings ~ poly(schooling, 3, raw=TRUE), data = training)
+  temp <- (testing$earnings - predict(third_order, testing))^2
+  errors3 <- c(errors3, temp)
+  
+  # fourth order model 
+  fourth_order = lm(earnings ~ poly(schooling, 4, raw=TRUE), data = training)
+  temp <- (testing$earnings - predict(fourth_order, testing))^2
+  errors4 <- c(errors4, temp)
+  
+  # sith order model (did you catch that one?) 
+  fifth_order = lm(earnings ~ poly(schooling, 5, raw=TRUE), data = training)
+  temp <- (testing$earnings - predict(fifth_order, testing))^2
+  errors5 <- c(errors5, temp)
+  
+}
+
+# Now we can see which model has smaller mean squared errors on average
+mean(errors1)
+mean(errors2)
+mean(errors3)
+mean(errors4)
+mean(errors5)
+
+```
+
+From the results above, it appears that a third order polynomial regression minimizes the total squared error. Extra dimensionality  (i.e. higher order regression) appears to capture more of the relationship than a simple linear model. However, the benefits of extra terms appears to wear off after the third order regression, probably due to over fitting. Though the fourth and fifth order functions are likely highly accurate between years zero and 12 of schooling, they are much less effective at predicting out of sample of observerations. 
+
+In general, this phenomenon (over fitting) occurs because the extra terms just by chance happen to correlate with the observed outcomes in our training sample, but they do not capture anything real about the relationship between schooling and earnings, reading every little noisy bump in the data as meaningful. As a result, they are less accurate in predicting out of sample data. The third order polynomial regression most effectively balances the gains from extra dimensions with the error introduced from overfitting.  
 
 ```{r code}
 
