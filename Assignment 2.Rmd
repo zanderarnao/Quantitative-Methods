@@ -1,75 +1,57 @@
 ---
-title: "Assignment 2"
-output: html_document
+title: "Quantitative Methods in Public Policy Assignment 2"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Quantitative Methods in Public Policy Assignment 2
+Below I install requisite packages and save our data. I also edit a few options to expand the size of resulting figures. I chose not to compile all my code at the end so as to not make the document super long. 
 
-Before moving into the body of this assignment, I will install requisite packages and save our data of interest as an object. I also edit a few options to expand the size of resulting figures. Throughout the assignment, I alternative between commentary and relevant code. For convenience the code is compiled at the end of this document as well. 
-
-```{r packages and data}
-# configure options for figure aesthetics
-knitr::opts_chunk$set(echo = TRUE, fig.width = 12, fig.height = 8)
+```{r packages and data, message = FALSE}
 
 # install requisite packages
 # install.packages(tidyverse)
 # install.packages(rvest)
 # install.packages(RColorBrewer)
-# install.packages(tidytext)
 # install.packages(knitr)
-# install.packages(downloader)
 # install.packages(here)
 
 # save packages to library
 library(tidyverse)
 library(rvest)
 library(RColorBrewer)
-library(tidytext)
 library(knitr)
-library(downloader)
 library(here)
 
-# the data analyzed in this assignment concerns the correlation between years of education and earnings of men who were aged between 41 and 50 years. The data can be downloaded via this link. Below is an explainer of the data taken from the read.me.
+# the data analyzed in this assignment concerns the correlation
+# between years of education and earnings of men who were 
+# aged between 41 and 50 years in 1980. 
+# The data can be downloaded via this link: 
+# https://press.princeton.edu/student-resources/thinking-clearly-with-data.
 
-# "Angrist and Krueger obtained their data from the Integrated Public Use
-# Microdata Series from the 1980 U.S. Census.
-
-# The study specifically focused on men born between 1930 and 1939, so they
-# were 41-50 years old at the time of data collection.
-
-# Each row corresponds to a large group of men with the same level of
-# schooling.
-
-# The variable "schooling" indicates the years of schooling for each group.
-# 12 corresponds with high school completion, and 16 corresponds with 
-# college completion.
-
-# The variable "earnings" indicates the average annual earnings (in 1980
-# U.S. dollars) for the men in each group."
 
 # save the data as an object
 schooling_data <- read.csv(here("Files for Data Exercises/SchoolingEarnings.csv"))
-  # note here() is taken from the here package. It makes code reproducible across different users and
-  # computer systems by creating from the working directory to the file's location. 
-  # For instance, running "here("Files for Data Exercises/SchoolingEarnings.csv")" in my console returns
+  # note here() is taken from the here package. 
+  # It makes code reproducible across different users and
+  # computer systems by creating a path from the working directory to the file's location. 
+  # For instance, running 
+  # "here("Files for Data Exercises/SchoolingEarnings.csv")" 
+  # in my console returns
   # "/Users/zanderarnao/Desktop/github projects/Quantitative-Methods/Files for Data
   # Exercises/SchoolingEarnings.csv". 
 
 ```
 
-With the data saved and options initialized, we now move into the required questions.
-
 **5.1) Run a regression with earnings as the dependent variable and schooling as the sole independent variable. Interpret the coefficients.** 
 
-Below I run an ordinary least squares regression on the schooling data, resulting in a line of best fit. Here schooling serves as the independent variable and earnings as the dependent. I provide a table with the relevant regression parameters, the regression coefficient (beta) and the intercept (alpha). 
+Below I run an ordinary least squares (OlS) regression on the schooling data, resulting in the line of best fit visualized in the scatter plot. Here schooling serves as the independent variable and earnings as the dependent. I provide a table with the relevant regression parameters: the regression coefficient (beta) and the intercept (alpha). 
 
 ```{r problem 5.1}
 
-# fit a regression line to the schooling data and show a result with regression
+# fit a regression line to the schooling data
 regression <- lm(data = schooling_data, earnings ~ schooling)
 summary(regression)
 
@@ -77,25 +59,23 @@ summary(regression)
 
 The regression coefficient and intercept are given in the table above. Beta is 1.16185, which is the slope of the regression line. Its sign is positive, which tells us that there is a positive correlation between years of schooling and earnings, i.e., that, on average, an increase in one variable is associated with an increase in the other.
 
-The specific magnitude of the correlation 1.16185, which means that the middle aged men in our data, each additional year of schooling corresponds, on average, to an increase in income by approximately $1,161.85 (1980 dollars).
+The specific magnitude of the correlation 1.16185, which means that for the middle aged men in our data, each additional year of schooling corresponds, on average, to an increase in income by approximately $1,161.85 (in 1980 dollars).
 
-Alpha is 8.79853, which tells us that the men in this cohort who received no years of schooling earned, on average, about $8,798.53 in 1980 dollars. 
+Alpha is 8.79853, which tells us that the men in this cohort who received no years of schooling earned, on average, about $8,798.53 (in 1980 dollars). 
 
-Now with the specific meaning of the regression parameters for the schooling data, we briefly discuss ... 
+Now with the specific meaning of the regression parameters for the schooling data, we briefly discuss why we would run an OLS regression. 
 
 **5.2) Suppose you wanted a parsimonious way to predict earnings using only years of schooling. What would you do?**
 
-For a parsimonious way to predict earnings using only years of schooling, I would run an ordinary least squares (OLS) regression of earnings on years of schooling. That is, years of schooling would serve as the explanatory variable and earnings the outcome of interest. Years of schooling would "explain" variation in earnings seen in the data.
+For a parsimonious way to predict earnings using only years of schooling, I would run an ordinary least squares (OLS) regression of earnings on years of schooling.Provided that the relationship between the variables is approximately linear, this statistical test would give us a line that, based on years of schooling, summarizes change in earnings on average. OLS accomplishes this by finding the line which minimizes the total squared errors, i.e, the squared sum of the all distances between the observed and predicted values of earnings for every year of schooling. 
 
-Provided that the relationship between the variables is approximately linear, this statistical test would give us a line that, based on years of schooling, summarizes change in earnings. OLS accomplishes this by finding the line which minimizes the total squared error, i.e, the distance between the observed and predicted values of earnings for every year of schooling. 
+OLS regression is useful because it is a parsimonious way to communicate the relationship between two or more variables. Alternatively, one could list all the years of schooling and their associated average earnings and draw conclusions about their relationship, but this method would be time-consuming and heavy with tedious information. 
 
-OLS regression is useful because it is a parsimonious way to communicate the relationship between two or more variables. One could list all the years of schooling and their associated average earnings and draw conclusions about their relationship. However, this method would be time-consuming and heavy with information. 
+By contrast, OLS regression allows one to study this relationship without detailed reference to the observed data. OLS regression provides a mathematical model which gives highly useful information, including the direction (positive, negative, or none) of the relationship and a sense of its magnitude. 
 
-By contrast, OLS regression allows one to study this relationship without detailed reference to the observed data. OLS regression provides a mathematical model which gives highly useful information, including the direction (positive, negative, or none) of the relationship and a sense of its magnitude. This information can have a number of uses, including for description, prediction, and causal assessment of a number of features within the world. Running an OLS regression between years of schooling and earnings may furnish knowledge about their relationship useful for other contexts (e.g. observations not currently part of our data)
+It is also worth briefly comparing OLS regression to higher order regressions. Higher order regressions add additional explanatory variables to the process (e.g., college major as an additional explainer of income), and while this can be useful (particularly when the relationship relationship is non-linear), it adds dimensionality and complexity that reduces the parsimony of the summary.
 
-It is also worth briefly comparing OLS regression to higher order regressions. Higher order regressions add additional explanatory variables to the process (e.g. college major as an explainer of income), and while sometimes this can be useful (particularly when the data is the relationship is non-linear), it adds dimensionality and complexity, which can reduce the parsimony of the summary. A regression equation with ten explanatory variables is likely not much more useful than listing or visualizing the data and assessing its 
-
-We can apply it here to find a parsimonious summary of the relationship between year of schooling and earnings. The specific meaning of identified regression coefficient and intercept are elaborated above. We not dig into whether the relationship between years of schooling and earnings is actually linear.  
+We can apply it here to find a parsimonious summary of the relationship between year of schooling and earnings. I do that below.
 
 **5.3) Let’s dig more deeply into whether the relationship between earning and schooling is approximately linear.**
 
@@ -131,16 +111,20 @@ schooling_data %>%
     y = "Earnings") + 
   scale_fill_brewer(palette = "Set3") +
   theme_bw()
+
+# note: I do not add legends in this assignment. 
+# The graphics are fairly simple, which makes the time it would take to code
+# a legend for each unnecessary. 
 ```
 
-The OLS regression appears to reasonably fit the data. It is noticeable, however, that over certain intervals the data are uniformly above or below the regression line. This might make us question whether the relationship is linear. 
+The OLS regression appears to reasonably fit the data. It is noticeable, however, that over certain intervals the data are uniformly above or below the regression line. That means the line is systematically over- or underestimating the actual outcomes for stretches of the data. This make me question whether the relationship is linear. 
 
 **b) Now run a fourth-order polynomial regression (i.e., including schooling, schooling squared, schooling to the third, and schooling to the fourth). Do those predictions meaningfully differ from the predictions coming from the linear regression?**
 
 To further elucidate whether the variables are linearly associated, I run a fourth-order polynomial regression on earnings and years of schooling at first, second, third, and fourth powers. I show the regression parameters and a fit a regression line to a scatter plot below. 
 
 ```{r fourth order polynomial regression}
-# fit a fourth-order regression and show the regression parameters
+# fit a fourth-order regression and summarize the regression parameters
 regression1 <- lm(data = schooling_data, 
   earnings ~ poly(schooling, 4, raw=TRUE))
 summary(regression1)
@@ -149,7 +133,7 @@ summary(regression1)
 schooling_data %>% 
   ggplot(aes(x = schooling, y = earnings)) + 
   geom_point() + 
-  geom_smooth(color = "purple", method = lm, se = TRUE,
+  geom_smooth(color = "purple", method = lm,
               formula = y ~ poly(x, 4, raw=TRUE)) + 
   labs(
     title = "Association between years of schooling and earned income",
@@ -160,17 +144,15 @@ schooling_data %>%
 
 ````
 
-The predictions meaningfully differ from the linear regression line. For for certain intervals of the data, a linear regression gave predictions that were systematically above or below the observed values. This is not the case for our fourth order polynomial regression. 
+The predictions meaningfully differ from the linear regression. For for certain intervals of the data, a linear regression gave predictions that were systematically above or below the observed values. This is not the case for our fourth order polynomial regression. 
 
-In addition, there seems to be less error in the polynomial regression's predictions; the line (and therefore our predicitons) appears uniformly closer to the observed values than the linear regression. 
+In addition, there seems to be less error in the polynomial regression's predictions; the line (and therefore its predictions) appears uniformly closer to the observed values than the linear regression. 
 
 **c) Now run different regressions for some different ranges of schooling. Do those lines look meaningfully different from the predictions you get from a single regression including all the data?**
 
-We now further test the linearity of the data by regression different ranges of schooling. Comparing the linear regression against the scattered observations, there appear to be three distinct intervals (years 0 to 4, 5 to 15, and 16 to 20). The observations are systematically above, below, and above the predictions made by the line of best fit. 
+Comparing the linear regression against the scattered observations, there appear to be three distinct intervals (years 0 to 5, 6 to 15, and 16 to 20). The observations are systematically above, below, and above the predictions made by the line of best fit in each of these intervals. In addition, the relationship between earnings and schooling  appear to be roughly linear within each of those intervals.
 
-In addition, the relationship between earnings and schooling  appear to be roughly linear within each of those intervals. Earnings tend to increase very slowly, if at all, from years 0 to 4, then steadily from 5 to 16, and sporadically from 17 to 20. This makes sense because these years correspond to distinct phases of a person's education. Years 0 to 4 are elementary/primary school; 5 to 15 are intermediate, secondary, and college; and 16 to 20 are post-graduate. It is reasonable to think that associations with changes in income will be different across these three groups. 
-
-In light of this, I run a segmented linear regression, that is, I plot a separate line of best fit for each of these intervals. In addition, I show a table with relevant regression parameters and visualize all three lines of best fit on a scatter plot. I start by separating the data into these three groups. 
+In light of this, I run a segmented linear regression on each of these intervals. I start by separating the data into these three groups. 
 
 ```{r segement the data}
 #separate the data into three groups and append a group id
@@ -192,8 +174,6 @@ schooling_rejoined <- schooling_g1 %>%
   full_join(schooling_g3)
 
 ```
-
-Defining three new data sets permits running a linear regression on each. Recombining them facilitates graphing on a common scatter plot. I perform these actions below. 
 
 ```{r segmented regression}
 
@@ -222,21 +202,19 @@ schooling_rejoined %>%
   scale_fill_brewer(palette = "Set3") +
   theme_bw()
 ```
-The lines do look meaningfully different from a regression using all of the data. First, the regression line is not continuous, increasing a different rates depending on the year. Second, the predictions appear, in general, to be more accurate. There is no consistent direction of error as occurred in the first linear regression, and the observations appear to be much closer to the lines' predictions, though the fourth order polynomial regression is similarly accurate across the board. It is clear that segmenting the regression improves the accuracy of the predicted outcomes, though at the expense of some parsimony.  
+
 
 **d) Does all this make you think the simple linear approach was reasonable or unreasonable?**
 
 It makes me think the simple linear approach was unreasonable. The simple linear regression was the most parsimonious since we only have to bear two regression parameters (beta and alpha) in mind. However, this parsimony comes at the expense of accuracy; the predictions made by the linear regression had greater error (which was the same direction over certain intervals) than the fourth order polynomial and segmented regressions. 
 
-It does not appear, therefore, that the relationship between years of schooling and earnings is approximately linear. While there is certainly a positive correlation, i.e. that earnings tends to increase with years of schooling on average, the magnitude of that change differs over time. This inconstancy indicates non-linearity, so a simple linear approach, though helpful, is inferior to higher order polynomial and segmented regression. 
+It does not appear, therefore, that the relationship between years of schooling and earnings is approximately linear. While there is certainly a positive correlation, i.e. that earnings tends to increase with years of schooling on average, the magnitude of that change differs over time. Linearity implies an approximately constant rate of change. 
 
 **5.4) Similar to what we did with age and voter turnout, conduct some out-of-sample tests to evaluate your prediction strategy. Using only data from those with twelve years of schooling or less, see how well your different strategies from question 3 perform when predicting earnings for those with more than twelve years of schooling.**
 
-To validate my conclusion above, I now compare the efficacy of alternative strategies to the simple linear approach. I do this by conducting some out-of-sample tests, that is, I will fit one simple linear, one fourth order polynomial, and one segmented linear regression to only the observations with 12 or less years of schooling. I show the relevant parameters for each regression via tables and then plot them on a common scatter plot. 
+I now compare the efficacy of alternative strategies to the simple linear approach. I will fit one simple linear, one fourth order polynomial, and one segmented linear regression to only the observations with 12 or less years of schooling. I then test their predictions for observations with greater than 12 years of age. 
 
-Below I separate the data into two data frames (one for observations with less and one for those with more than 12 years of schooling) and then fit three regressions for the first group. I also recombine the two data sets to facilitate their graphing on a common scatter plot. 
-
-To make a complicated stretch of coding more manageable to read, I break it up with short sentences summarizing my transformations. I start by splitting the data into in sample and out of sample groups. 
+I start by splitting the data into in sample and out of sample groups. 
 ```{r split data}
 # create in and out of sample data
 in_sample <- schooling_data %>% 
@@ -271,10 +249,10 @@ ggplot() +
 ```
 It appears that a simple linear model fitted to the first twelve years of schooling is horribly predictive of out of sample data. While there is less error from years zero to 12 than there was along the simple linear regression of the entire data set, the observations are much higher than predicted when assuming linearity. This is further confirmation of my conclusion.   
 
-Below I fit a fourth order regression to the in sample data and test its predictions against the out of sample. 
+Below I fit a fourth order regression to the in sample data and test its predictions against the out of sample. In the visualizations below, in sample observations are plotted in blue and out of sample observations are plotted in red. 
 
 ```{r fourth order out of sample test}
-# fit fourth order regression to in_sample data
+# fit fourth order regression to in sample data
 regression6 <- lm(data = in_sample, 
   earnings ~ poly(schooling, 4, raw=TRUE))
 summary(regression6)
@@ -298,9 +276,9 @@ ggplot() +
   scale_fill_brewer(palette = "Set3") +
   theme_bw()
 ```
-The fourth order polynomial regression has much less error than the simple linear model. While the out of sample predictions are not amazingly accurate, they are much closer to the observed outcomes than the simple linear model. In addition, they are not systematically below observed outcomes as they were with the simple linear model. This suggests a polynomial regression might be an effective strategy.   
+The fourth order polynomial regression has much less error than the simple linear model. While the out of sample predictions are not amazingly accurate, they are much closer to the observed outcomes than the simple linear model. In addition, they are not systematically above or below observed outcomes as they were with the simple linear model. This suggests a polynomial regression might be an effective strategy.   
 
-Finally, I separate the in sample data into two groups (group from years 0 to 3 and group 2 from years 4 to 12) and fit a linear regression to each segment. I then test its predictions (that of the regression from group 2) against the out of sample data. It is all visualized on a common scatter plot. 
+Finally, I test a segmented linear regressions over two intervals (from years 0 to 3 and group 2 from years 4 to 12). I pick these intervals because the rate of change appears to differ between years 3 and 4, though perhaps 4 and 5 would also serve as credible cut offs.
 
 ```{r segmented out of sample test}
 #separate in_sample data into two groups and append group number
@@ -312,6 +290,7 @@ in_sample_g2 <- in_sample %>%
   filter(3 < schooling) %>% 
   mutate(group = 2)
 
+# recombine them for graphing
 in_sample_segmented <- in_sample_g1 %>% 
   full_join(in_sample_g2) 
 
@@ -327,7 +306,7 @@ summary(regression8)
 # plot segmented linear regression showing out of sample data
 ggplot() + 
   geom_point(data = in_sample, 
-    aes(x = schooling, y = earnings), color = "green") + 
+    aes(x = schooling, y = earnings), color = "blue") + 
   geom_point(data = out_of_sample, 
     aes(x = schooling, y = earnings), color = "red") + 
   geom_segment(aes(x = 0, y = 12.41659, xend = 3, yend = 12.45874), 
@@ -341,29 +320,31 @@ ggplot() +
   scale_fill_brewer(palette = "Set3") +
   theme_bw()
 
+# note: the group 1 regression line is shown in orange; group 2's is purple. 
+
 ```
-The segmented regression is not a desirable strategy either. Conceptually, if segments are found to be useful, i.e. that the data are linear at different intervals, then it makes little sense to assume linearity across the interval of out of sample predictions. However, this assumption is required, and the relative inaccuracy of predictions is the result. The segmented linear regression is less off the mark than the simple linear model, but its predictions are still systematically too low. The polynomial regression is better on both fronts and it thus the preferred strategy between these three alternatives.
+
 
 **5.5). Drop one observation, run a regression to try to predict the outcome for that missing observation, and see how far you were. Repeat this for each observation in the data set (you should be able to do this with a loop) and average your errors. Try different strategies to see which one gives you the best out-of-sample predictions.**
 
-Though we can now prefer a strategy of polynomial regression over simple or segmented linear models, we can verify this preference even more rigorously. Below I loop through every data point, drop each point from the data, fit a model to the remaining observations, and then compare the mean error (i.e. difference between actual and predicted outcome). I do this for a simple linear and second, third, fourth, and fifth order polynomial. I report and compare each of their standard errors to select a preferred model.  
+
 
 ```{r}
-# calculate average error using a linear and fourth-order regression
+# calculate average error using a linear and first through fifth order regressions
 
-# Where to store the square errors for model 1?
+# initialize an empty character vector
 errors1 <- c()
 
-# Where to store the square errors for model 2?
+# initialize an empty character vector
 errors2 <- c()
 
-# Where to store the square errors for model 2?
+# initialize an empty character vector
 errors3 <- c()
 
-# Where to store the square errors for model 2?
+# initialize an empty character vector
 errors4 <- c()
 
-# Where to store the square errors for model 2?
+# initialize an empty character vector
 errors5 <- c()
 
 # for loop
@@ -400,7 +381,7 @@ for (i in c(1:21)){
   
 }
 
-# Now we can see which model has smaller mean squared errors on average
+# She the mean squared error for each model.
 mean(errors1)
 mean(errors2)
 mean(errors3)
@@ -409,6 +390,4 @@ mean(errors5)
 
 ```
 
-From the results above, it appears that a third order polynomial regression minimizes the total squared error. Extra dimensionality  (i.e. higher order regression) appears to capture more of the relationship than a simple linear model. However, the benefits of extra terms appears to wear off after the third order regression, probably due to over fitting. Though the fourth and fifth order functions are likely highly accurate between years zero and 12 of schooling, they are much less effective at predicting out of sample of observerations. 
 
-In general, this phenomenon (over fitting) occurs because the extra terms just by chance happen to correlate with the observed outcomes in our training sample, but they do not capture anything real about the relationship between schooling and earnings, reading every little noisy bump in the data as meaningful. As a result, they are less accurate in predicting out of sample data. The third order polynomial regression most effectively balances the gains from extra dimensions with the error introduced from overfitting.  
