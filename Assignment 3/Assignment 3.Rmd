@@ -1,0 +1,51 @@
+---
+title: "Assignment 3"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# install requisite packages
+# install.packages(tidyverse)
+# install.packages(rvest)
+# install.packages(RColorBrewer)
+# install.packages(knitr)
+# install.packages(here)
+
+# save packages to library
+library(tidyverse)
+library(rvest)
+library(RColorBrewer)
+library(knitr)
+library(here)
+
+# save data as object
+data <- read.csv(here("Assignment 3/GOTV_Experiment.csv"))
+```
+
+**Several factors complicate the analysis of this particular experiment. First, the probability of being randomly assigned to treatment was different for urban and non-urban areas. Second, some people assigned to treatment did not receive the treatment. And third, we are unable to observe turnout for some of the subjects. See the README file for more details.** 
+ 
+**a) Calculate the mean value of turnout for people who did and did not receive the treatment, and interpret the implied effect of get-out-the-vote interventions on turnout. Think about the likely biases that arise from the three complications listed above. If you had to guess, would you say that you are likely over- or under-estimating the average effect with this analysis? Explain your answer.**
+
+```{r implied effect}
+
+mean_turnout_t0 <- data %>% 
+  filter(successfultreatment == 0) %>% 
+  filter(is.na(turnout) != 1) %>% 
+  summarise(mean = mean(turnout))
+print(mean_turnout_t0)
+
+mean_turnout_t1 <- data %>% 
+  filter(successfultreatment == 1) %>% 
+  filter(is.na(turnout) != 1) %>% 
+  summarise(mean = mean(turnout))
+print(mean_turnout_t1)
+
+```
+
+**b) Using the lessons from Chapter 10, try to account for the fact that probability of treatment between urban and non-urban areas. How did you estimate your change? Why?**
+
+**c) Using the lessons from the chapter, let’s try to account for noncompliance. First, try to estimate the intent-to-treat effect (reduced form) and the compliance rate (first stage). Now divide the former by the latter to estimate the compiler average treatment effect.**
+
+**d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the compiler average treatment effect assuming that none of the subjects who attired would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**

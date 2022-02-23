@@ -7,7 +7,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Below I install requisite packages and save our data. I also edit a few options to expand the size of resulting figures. I chose not to compile all my code at the end so as to not make the document super long. 
+Below I install requisite packages and save our data. Note: I chose not to compile all my code at the end so as to not make the document super long. 
 
 ```{r packages and data, message = FALSE}
 
