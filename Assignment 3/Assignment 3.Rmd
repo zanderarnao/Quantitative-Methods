@@ -29,25 +29,181 @@ data <- read.csv(here("Assignment 3/GOTV_Experiment.csv"))
 **a) Calculate the mean value of turnout for people who did and did not receive the treatment, and interpret the implied effect of get-out-the-vote interventions on turnout. Think about the likely biases that arise from the three complications listed above. If you had to guess, would you say that you are likely over- or under-estimating the average effect with this analysis? Explain your answer.**
 
 ```{r implied effect}
-
-mean_turnout_t0 <- data %>% 
-  filter(successfultreatment == 0) %>% 
-  filter(is.na(turnout) != 1) %>% 
-  summarise(mean = mean(turnout))
-print(mean_turnout_t0)
-
+# find average turnout of those who received the treatment
 mean_turnout_t1 <- data %>% 
   filter(successfultreatment == 1) %>% 
   filter(is.na(turnout) != 1) %>% 
   summarise(mean = mean(turnout))
-print(mean_turnout_t1)
+mean_turnout_t1
 
+# find average turnout of those who did not receive the treatment
+mean_turnout_t0 <- data %>% 
+  filter(successfultreatment == 0) %>% 
+  filter(is.na(turnout) != 1) %>% 
+  summarise(mean = mean(turnout))
+mean_turnout_t0
 
+# estimate the implied effect of treatment
+implied_effect <- mean_turnout_t1 - mean_turnout_t0
+implied_effect
+```
+
+The mean value of turnout (rounded to the nearest thousandth) for people hwo did and did not receive the treatment are .594 and .474, respectively, and the implied effect of the treatment is the difference between these two averages. From this estimate, the implied effect of get-out-the-vote interventions on turnaround is .119. That is, the get-out-the-vote intervention is interpreted to have caused an 11.9% increase in turnout from between the treatment and control groups. 
+
+This number is likely an overestimate of the average effect of the treatment. The three complications to the experiment--differing probabilities of assignment between urban and non-urban areas, presence of noncompliance, and attrition in the sample--all create baseline differences between our treatment and control groups, which biases our estimate of the average effect in a positive directions. As a result, the number found above likely overestimates the magnitude of the effect of get-out-the-vote interventions on turnout. 
+
+The first complication makes living in an urban area a confounder because residential location influences likelihood of treatment and outcome above and beyond random assignment of treatment into one of those states. We can verify this by finding comparing a) probabilities of urbanites and non-urbanites of being assigned into the treatment or control group and b) the average likelihood of these two groups to turnout in the control group. 
+
+```{r urban confounder}
+# find proprotion of urbanites in the sample
+prop_urban <- data %>% 
+  filter(urban == 1) %>% 
+  count()/50000
+prop_urban  
+
+# find proportion of non-urbanites in the sample
+prop_nonurban <- data %>% 
+  filter(urban == 0) %>% 
+  count()/50000
+prop_nonurban
+
+# find proportion of urbanites in the treatment group
+prop_urban_treat <- data %>% 
+  filter(urban == 1 & treatmentattempt == 1) %>% 
+  count()/25099
+prop_urban_treat 
+
+# find proportion of urbanites in the control group
+prop_urban_control <- data %>% 
+  filter(urban == 1 & treatmentattempt == 0) %>% 
+  count()/25099
+prop_urban_control 
+
+# find proportion of non-urbanites in the treatment group
+prop_nonurban_treat <- data %>% 
+  filter(urban == 0 & treatmentattempt == 1) %>% 
+  count()/25099
+prop_nonurban_treat 
+
+# find proportion of non-urbanites in the control group
+prop_nonurban_control <- data %>% 
+  filter(urban == 0 & treatmentattempt == 0) %>% 
+  count()/25099
+prop_nonurban_control
 
 ```
+
+From the analysis above, urbanites and non-urbanites represent roughly half of the sample, yet they both
+groups not equally present in similar proprotions within the control and sample. Given that an 
+observation lived in an urban area, the probability of being assigned to the treatment and control 
+groups were .199 and .792, respectively, while the same of an observation living outside an urban area 
+was .801 and .201, respectively. Therefore, urbanites are substantially underrepresented in the
+treatment group overrepresented in the control group. 
+
+Now, to figure out whether being in an urban area is associated with greater likelihood to vote, we can compare turnout between urbanites and non-urbanites in the control.
+
+```{r compare turnout}
+# find proportion of urbanites in control who voted
+control_urban_turnout <- data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/19868
+control_urban_turnout
+
+# find proportion of non-urbanites in control who voted
+control_nonurban_turnout <- data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/5033
+control_nonurban_turnout
+
+# find average difference in likelihood to turnout
+turnout_difference <- control_urban_turnout - control_nonurban_turnout
+turnout_difference
+```
+
+After conducting this comparison, it clear is that non-urban residents in the control group were more
+likely to turn out than urban residents. More specifically, the average difference in turnout was
+-.0611, or urbanites in the control were 6.11% less likely to turnout absent the intervention. Normally,
+this difference wouldn't be a problem because randomization would guarantee that, in expectation,
+such differences would be spread evenly on average between the treatment and control. 
+
+However, assignment was not random. Being an urbanite made a given observation substantially less likely
+to be assigned to the treatment group. In addition, urbanites are less likely to turnout. The
+combination of these facts means there are baseline differences present; the experiment is not comparing
+apples-to-oranges. 
+
+As a result, "urban" is a confounder, which results in the implied effect of
+get-out-the-vote interventions being overestimated. This bias occurs because the sign of the 
+confounder's influence on treatment and likelihood are both negative. Living in an urban area means 
+observations in that group were both less likely to be in the treatment group and less likely to vote,
+which biases our results toward an overestimation of the result.
+
+The second complication is the presence of noncompliers. Not all people assigned to treatment were
+successfully treated. This is hard to empirically assess because comparing the turnout of noncompliers
+(who where assigned to treatment) and the same of the control group is not apples-to-apples. 
+
+However, we can reason that noncompliers are less likely to turnout than compliers. Perhaps 
+noncompliers, on  average, are less friendly or community-oriented and so are less liley to answer their
+door when they hearing a political canvasser knocking. I would wager that these characteristics are 
+correlated with lower probabilities of turnout. 
+
+If this assumption holds, then the naive implied estimate of get-out-the-vote operations might be 
+an overestimation because noncompliers, who we assume are less likley to turnout, are present in the 
+control group but not the treatment. Therefore, baseline differences are present, and the resulting bias
+bias is positive because being a noncomplier reduces the probability that observations in this group are
+assigned to the treatment and will turnout. 
+
+In other words, noncompliance is a confounder, and the sign of its influence upon both treatment and 
+the outcome are negative, which means it would positively bias our naive estimate. Noncompliance results
+in an overestimation of the effect of get-out-the-vote interventions. 
+
+The third complication is attrition. Many of the observations in both the control and the treatment 
+groups attrited from the sample, that is, whether they voted could not be ascertained perhaps because
+they moved out of state, died, or mysteriously vanished. Crucially, whether or not this attrition biases
+the implied effect of get-out-the-vote interventions dependson the nature of the attrition. If attrition
+occured at random (i.e., is unrelated to the treatment of potential outcome), then attrition does not
+bias our estimate (just reduces the sample size). 
+
+I do not think there are strong reasons to believe attrition is systematically treatment or outcome of
+interest. The hypothetical reasons enumerated above are rather idiosyncratic; assignment to the
+treatment group is hardlly likely to make a participant move out of state. As such, I would wager that
+attrition was random in nature and therefore does not bias our the implied effect of get-out-the-vote
+interventions. 
+
+Briefly, we can confirm this hypothesis by testing whether rates of attrition were significantly higher
+in either the treatment or control group. 
+
+```{r attrition}
+# find proportion of attrited sample assigned to treatment
+prop_attrited_treat <- data %>% 
+  filter(treatmentattempt == 1 & is.na(turnout)) %>% 
+  count()/25099
+prop_attrited_treat
+
+# find proportion of attrited sample assigned to control
+prop_attrited_control <- data %>% 
+  filter(treatmentattempt == 0 & is.na(turnout)) %>% 
+  count()/24901
+prop_attrited_control
+
+# find the difference of average attrition between treatment and control
+attrition_diff <- prop_attrited_treat - prop_attrited_control
+attrition_diff
+```
+
+From the analysis above, it is likely that attrition was random and unrelated to assignment to treatment
+or control groups. The difference in average attrition between the two groups, at less than .0001, is
+minuscule. Assuming a null hypothesis of no rleationship between attrition and assignment, even without
+formal calculation of a p-value, it is very unlikely that the null could be rejected. Thus, we have
+strong evidence that attrition was random, which mean it does not contribute to baseline differences
+between the two groups. 
+
+In conclusion, it is likely that this analysis overestimates the average effect of get-out-the-vote
+efforts. While attribution likely does not contribute to bias, the other two complications, non-random
+assignment and the presence of noncompliance, both bias the estimate in a positive direction, resulting
+in an over-estimate of the treatment's effect. 
 
 **b) Using the lessons from Chapter 10, try to account for the fact that probability of treatment between urban and non-urban areas. How did you estimate your change? Why?**
 
 **c) Using the lessons from the chapter, let’s try to account for noncompliance. First, try to estimate the intent-to-treat effect (reduced form) and the compliance rate (first stage). Now divide the former by the latter to estimate the compiler average treatment effect.**
 
-**d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the compiler average treatment effect assuming that none of the subjects who attired would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**
+**d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the compiler average treatment effect assuming that none of the subjects who attrited would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**
