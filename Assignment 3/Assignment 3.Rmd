@@ -204,6 +204,37 @@ in an over-estimate of the treatment's effect.
 
 **b) Using the lessons from Chapter 10, try to account for the fact that probability of treatment between urban and non-urban areas. How did you estimate your change? Why?**
 
+```{r control urban confounder}
+# regress turnout on treatment
+regression <- lm(data = data, turnout ~ successfultreatment)
+summary(regression)
+
+# regress turnout on treatment and urban
+regression_test <- lm(data = data, turnout ~ successfultreatment + urban)
+summary(regression_test)
+
+```
+
+I tried accounting for the bias introduced by the divergent probability of treatment between urban and non-urban areas by regressing turnout on both treatment and an "urban" dummy variable, which is 1 when an observation lives in an urban area and 0 when they live in a non-urban area. 
+
+Essentially, I am controlling for the bias introduced by this confounder.
+Including an urban variable in the regression incorporates information about
+the effect of this confounder upon the outcome. This improves the accuracy of
+the estimated relationship between the treatment and the outcome by holding the
+urban variable constant. Conceptually, when controlling for urban residence, 
+the estimated effect of the treatment becomes a weighted average of the
+relationship between treatment and outcome of interest for urbanites and
+non-urbanites.
+
+My estimate decreased by from .119 to .104, for a decrease of .015. This likely
+occurred because urban residence makes an individual less likely to both turnout
+and be successfully treated, and the original (biased) estimate inaccurately
+included some of this influence within the implied effect of treatment on
+turnout. Making this effect explicit, therefore, reduces the reported causal
+relationship between treatment and turnout.
+
 **c) Using the lessons from the chapter, let’s try to account for noncompliance. First, try to estimate the intent-to-treat effect (reduced form) and the compliance rate (first stage). Now divide the former by the latter to estimate the compiler average treatment effect.**
+
+
 
 **d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the compiler average treatment effect assuming that none of the subjects who attrited would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**
