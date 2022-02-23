@@ -42,6 +42,8 @@ mean_turnout_t1 <- data %>%
   summarise(mean = mean(turnout))
 print(mean_turnout_t1)
 
+
+
 ```
 
 **b) Using the lessons from Chapter 10, try to account for the fact that probability of treatment between urban and non-urban areas. How did you estimate your change? Why?**
