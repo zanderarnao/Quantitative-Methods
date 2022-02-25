@@ -353,6 +353,278 @@ final_CATE
 
 ```
 
-The final, unbaised estimate of the CATE for get-out-the-vote interventions is 0.0561, that is, compliers were 5.6% more likely to turnout after being assigned to the treatment group. 
+The final, unbiased estimate of the CATE for get-out-the-vote interventions is 0.0561, that is, compliers were 5.6% more likely to turnout after being assigned to the treatment group. 
 
-**d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the compiler average treatment effect assuming that none of the subjects who attrited would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**
+**d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the complier average treatment effect assuming that none of the subjects who attrited would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**
+
+If I were to drop the subjects for whom we do not observe their turnout, I would be implicitly assuming that the group that attrited was not any different from the group that did not. In other words, I would be assuming that attrition was random. 
+
+This is not always the case. If there are systematic differences between those who attrited and those who remained in the experiment, then dropping the former from the experiment might bias calculated estimates of the treatment's effect. As I argued above, I do not think there is reason to worry; not knowing whether someone voted is probably a result of idiosyncratic factors like moving out of state. 
+
+But just in case, I will estimate the treatment effect assuming that none of the subject who attrited would have voted (the base-case). I will also identify and interpret the worst- and base-case scenario. I start by imputing the missing values from the data set for each of these scenarios: base-case all attrited are assumed to not vote; worst-case the attrited in control are assumed to have voted and in treatment are assumed to not; best-case the attrited in control are assumed to not have voted and in treatment are assumed to have. 
+
+```{r modify data sets for attrition}
+# impute no voting for all attrited (the base case)
+base_case_data <- data %>% 
+  mutate(turnout = replace_na(0))
+
+# impute all voting for attrited in control and no voting in treatment (the worst case)
+# replace all missing values of turnout in control with 1
+control_worst_case <- data %>% 
+  filter(treatmentattempt == 0) %>% 
+  mutate(turnout = replace_na(1))
+
+# replace all missing values of turnout in control with 0 
+treatment_worst_case <- data %>% 
+  filter(treatmentattempt == 1) %>% 
+  mutate(turnout = replace_na(0))
+
+# rejoin the two data sets
+worst_case_data <- control_worst_case %>% 
+  full_join(treatment_worst_case)
+
+# impute no voting for attrited in control and all voting in treatment (the best case)
+# replace all missing values of turnout in control with 0
+control_best_case <- data %>% 
+  filter(treatmentattempt == 0) %>% 
+  mutate(turnout = replace_na(0))
+
+# replace all missing values of turnout in control with 1 
+treatment_best_case <- data %>% 
+  filter(treatmentattempt == 1) %>% 
+  mutate(turnout = replace_na(1))
+
+# rejoin the two data sets
+best_case_data <- control_best_case %>% 
+  full_join(treatment_best_case)
+
+```
+
+Now, with values imputed for the base, worst, and best case senarios of attrition, we can calcuate and compare the complier average treatment. This will give us upper and lower bounds on the extent and direction of bias from attrition. 
+
+```{r base case}
+# find the intent-to-treat effect for both groups
+# urban first - estimate number of urbanites in treatment group
+n_urban_treatment_base <- base_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1) %>% 
+  count()
+
+# estimate number of urbanites in control group
+n_urban_control_base <- base_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+urban_turnout_treatment_base <- base_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_urban_treatment_base
+
+urban_turnout_control_base <- base_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_urban_control_base
+
+# find the average difference in turnout for treatment and control groups
+ITT_urban_base <- urban_turnout_treatment_base - urban_turnout_control_base
+ITT_urban_base
+
+# non-urban second - estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_treatment_base <- base_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+  count()
+
+# estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_control_base <- base_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+nonurban_turnout_treatment_base <- base_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment_base
+
+nonurban_turnout_control_base <- base_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_nonurban_control_base
+
+# find the average difference in turnout for treatment and control groups
+ITT_nonurban_base <- nonurban_turnout_treatment_base - nonurban_turnout_control_base
+ITT_nonurban_base
+
+# find the proportion of compliers for both groups
+# urban first - estimate proportion of compliers and always-takers in treatment group
+urban_compliers_base <- base_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/n_urban_treatment_base
+urban_compliers_base
+
+# non-urban second - estimate proportion of compliers and always-takers in treatment group
+nonurban_compliers_base <- base_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment_base
+nonurban_compliers_base
+
+# implement the Wald Estimator by dividing the ITT by proportion of compliers
+# urban first - divide the ITT by proportion of urban compliers
+urban_CATE_base <- ITT_urban_base/urban_compliers_base
+urban_CATE_base
+
+# non-urban second - divide the ITT by proportion of non-urban compliers
+nonurban_CATE_base <- ITT_nonurban_base/nonurban_compliers_base
+nonurban_CATE_base
+
+# average the two unbiased esitmates of CATE
+final_CATE_base <- (urban_CATE_base + nonurban_CATE_base)/2
+final_CATE_base
+```
+
+```{r worst case}
+# find the intent-to-treat effect for both groups
+# urban first - estimate number of non-attrited urbanites in treatment group
+n_urban_treatment_worst <- worst_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+  count()
+
+# estimate number of non-attrited urbanites in control group
+n_urban_control_worst <- worst_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+urban_turnout_treatment_worst <- worst_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_urban_treatment_worst
+
+urban_turnout_control_worst <- worst_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_urban_control_worst
+
+# find the average difference in turnout for treatment and control groups
+ITT_urban_worst <- urban_turnout_treatment_worst - urban_turnout_control_worst
+ITT_urban_worst
+
+# non-urban second - estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_treatment_worst <- worst_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+  count()
+
+# estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_control_worst <- worst_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+nonurban_turnout_treatment_worst <- worst_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment
+
+nonurban_turnout_control_worst <- worst_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_nonurban_control
+
+# find the average difference in turnout for treatment and control groups
+ITT_nonurban_worst <- nonurban_turnout_treatment_worst - nonurban_turnout_control_worst
+ITT_nonurban_worst
+
+# find the proportion of compliers for both groups
+# urban first - estimate proportion of compliers and always-takers in treatment group
+urban_compliers_worst <- worst_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/n_urban_treatment_worst
+urban_compliers_worst
+
+# non-urban second - estimate proportion of compliers and always-takers in treatment group
+nonurban_compliers_worst <- worst_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment_worst
+nonurban_compliers_worst
+
+# implement the Wald Estimator by dividing the ITT by proportion of compliers
+# urban first - divide the ITT by proportion of urban compliers
+urban_CATE_worst <- ITT_urban_worst/urban_compliers_worst
+urban_CATE_worst
+
+# non-urban second - divide the ITT by proportion of non-urban compliers
+nonurban_CATE_worst <- ITT_nonurban_worst/nonurban_compliers_worst
+nonurban_CATE_worst
+
+# average the two unbiased esitmates of CATE
+final_CATE_worst <- (urban_CATE_worst + nonurban_CATE_worst)/2
+final_CATE_worst
+```
+
+
+```{r best case}
+
+# find the intent-to-treat effect for both groups
+# urban first - estimate number of non-attrited urbanites in treatment group
+n_urban_treatment_best <- best_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+  count()
+
+# estimate number of non-attrited urbanites in control group
+n_urban_control_best <- best_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+urban_turnout_treatment_best <- best_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_urban_treatment_best
+
+urban_turnout_control_best <- best_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_urban_control_best
+
+# find the average difference in turnout for treatment and control groups
+ITT_urban_best <- urban_turnout_treatment_best - urban_turnout_control_best
+ITT_urban_best
+
+# non-urban second - estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_treatment_best <- best_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+  count()
+
+# estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_control_best <- best_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+nonurban_turnout_treatment_best <- best_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment_best
+
+nonurban_turnout_control_best <- best_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_nonurban_control_best
+
+# find the average difference in turnout for treatment and control groups
+ITT_nonurban_best <- nonurban_turnout_treatment_best - nonurban_turnout_control_best
+ITT_nonurban_best
+
+# find the proportion of compliers for both groups
+# urban first - estimate proportion of compliers and always-takers in treatment group
+urban_compliers_best <- best_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/n_urban_treatment_best
+urban_compliers_best
+
+# non-urban second - estimate proportion of compliers and always-takers in treatment group
+nonurban_compliers_best <- best_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment_best
+nonurban_compliers_best
+
+# implement the Wald Estimator by dividing the ITT by proportion of compliers
+# urban first - divide the ITT by proportion of urban compliers
+urban_CATE_best <- ITT_urban_best/urban_compliers_best
+urban_CATE_best
+
+# non-urban second - divide the ITT by proportion of non-urban compliers
+nonurban_CATE_best <- ITT_nonurban_best/nonurban_compliers_best
+nonurban_CATE_best
+
+# average the two unbiased esitmates of CATE
+final_CATE_best <- (urban_CATE_best + nonurban_CATE_best)/2
+final_CATE_best
+```
