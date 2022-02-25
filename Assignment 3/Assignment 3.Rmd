@@ -235,6 +235,124 @@ relationship between treatment and turnout.
 
 **c) Using the lessons from the chapter, let’s try to account for noncompliance. First, try to estimate the intent-to-treat effect (reduced form) and the compliance rate (first stage). Now divide the former by the latter to estimate the compiler average treatment effect.**
 
+It would be dangerous to estimate the effect of the treatment without accounting for noncompliance and 
+non-random assignment. To do so, I will estimate a separate complier average treatment effect (CATE)
+for urbanites and non-urbanites in the sample. Finding the CATE uses instrumental variables to account for noncompliance and estimating separate CATEs mitigates the bias produced by non-random assignment. 
 
+In practice, I will find the CATE by first identifying the "intent-to-treat" (ITT) effect, the average difference in turnout between those assigned to treatment and control, for both groups. Then I will find the proportion of compliers and divide the ITT effect by that proprortion to get an unbiased estimate of the CATE. This will be the "Wald Estimator" for both urban and non-urban groups. 
+
+Considering the urban and non-urban groups separately is possible because the sample size is adequately large. The smallest subset, urbanites in the treatment group and non-urbanites in the control, still have roughly 5,000 observations. That number is sufficient to let me compare treatment the control and treatment groups of urban and non-urban residents. 
+
+Note: I choose to drop those observations for whom we do not know their turnout. Dropping here is justified because, as dicussed above, attrition was likely random and unrelated to treatment status. 
+
+```{r ITT}
+# find the intent-to-treat effect for both groups
+# urban first - estimate number of non-attrited urbanites in treatment group
+n_urban_treatment <- data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+  count()
+
+# estimate number of non-attrited urbanites in control group
+n_urban_control <- data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+urban_turnout_treatment <- data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_urban_treatment
+
+urban_turnout_control <- data %>% 
+  filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_urban_control
+
+# find the average difference in turnout for treatment and control groups
+ITT_urban <- urban_turnout_treatment - urban_turnout_control
+ITT_urban
+
+# non-urban second - estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_treatment <- data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+  count()
+
+# estimate number of non-attrited non-urban residents in treatment group
+n_nonurban_control <- data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+  count()
+
+# find average turnout for control and treatment groups
+nonurban_turnout_treatment <- data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment
+
+nonurban_turnout_control <- data %>% 
+  filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
+  count()/n_nonurban_control
+
+# find the average difference in turnout for treatment and control groups
+ITT_nonurban <- nonurban_turnout_treatment - nonurban_turnout_control
+ITT_nonurban
+
+```
+
+The estimated intent-to-treat effects are .041 and .033 for urban and non-areas, respectively, which describe the average difference in turnout between treatment and control gorups for urban and non-urban areas. Next I estimate the proportion of compliers in each group.
+
+```{r prop compliers}
+# find the proportion of compliers for both groups
+# urban first - estimate proportion of compliers and always-takers in treatment group
+urban_compliers <- data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/n_urban_treatment
+urban_compliers
+
+# non-urban second - estimate proportion of compliers and always-takers in treatment group
+nonurban_compliers <- data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment
+nonurban_compliers
+
+```
+
+
+The numbers above imply that the proportion of compliers for urban and non-urban areas are .753 and .566, respectively. Now we implement the Wald Estimator for both groups to find an unbiased estimate of their CATEs. 
+
+```{r prop compliers}
+# find the proportion of compliers for both groups
+# urban first - estimate proportion of compliers and always-takers in treatment group
+urban_compliers <- data %>% 
+  filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/n_urban_treatment
+urban_compliers
+
+# non-urban second - estimate proportion of compliers and always-takers in treatment group
+nonurban_compliers <- data %>% 
+  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  count()/n_nonurban_treatment
+nonurban_compliers
+
+```
+
+```{r wald}
+# implement the Wald Estimator by dividing the ITT by proportion of compliers
+# urban first - divide the ITT by proportion of urban compliers
+urban_CATE <- ITT_urban/urban_compliers
+urban_CATE
+
+# non-urban second - divide the ITT by proportion of non-urban compliers
+nonurban_CATE <- ITT_nonurban/nonurban_compliers
+nonurban_CATE
+
+```
+
+After implementing the Wald Estimator, we find unbiased estimates of the CATE for both urban and non-urban areas, which are .055 and .058, respectively. We now find an overall CATE for get-out-the-vote interventions by taking an average, weighted by which area had more variation in the treatment group. Since there was equal roughly variation in the treatment group for urban and non-urban voters, we take a simple average of the two. 
+
+```{r overall wald}
+# average the two unbiased esitmates of CATE
+final_CATE <- (urban_CATE + nonurban_CATE)/2
+final_CATE
+
+```
+
+The final, unbaised estimate of the CATE for get-out-the-vote interventions is 0.0561, that is, compliers were 5.6% more likely to turnout after being assigned to the treatment group. 
 
 **d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the compiler average treatment effect assuming that none of the subjects who attrited would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**
