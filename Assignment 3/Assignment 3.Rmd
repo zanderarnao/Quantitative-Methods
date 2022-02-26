@@ -176,33 +176,36 @@ summary(regression_test)
 
 ```
 
-I tried accounting for the bias introduced by the divergent probability of treatment between urban and non-urban areas by regressing turnout on both treatment and an "urban" dummy variable, which is 1 when an observation lives in an urban area and 0 when they live in a non-urban area. 
+I tried accounting for the bias introduced by the unequal probability of being assigned to treatment
+between urban and non-urban areas by regressing turnout on both treatment and the "urban" variable. 
 
-Essentially, I am controlling for the bias introduced by this confounder.
-Including an urban variable in the regression incorporates information about
-the effect of this confounder upon the outcome. This improves the accuracy of
-the estimated relationship between the treatment and the outcome by holding the
-urban variable constant. Conceptually, when controlling for urban residence, 
-the estimated effect of the treatment becomes a weighted average of the
-relationship between treatment and outcome of interest for urbanites and
-non-urbanites.
+This procedure controls for the bias introduced by the confounder becuase including an urban variable 
+in the regression by incorporating information about the effect of this confounder upon the outcome. 
+This improves the accuracy of the estimated relationship between the treatment and the outcome by
+holding the urban variable constant. Conceptually, when controlling for urban residence, 
+the estimated effect of the treatment becomes a weighted average of the relationship between treatment
+and outcome of interest for urbanites and non-urbanites.
 
-My estimate decreased by from .119 to .104, for a decrease of .015. This likely
-occurred because urban residence makes an individual less likely to both turnout
-and be successfully treated, and the original (biased) estimate inaccurately
-included some of this influence within the implied effect of treatment on
-turnout. Making this effect explicit, therefore, reduces the reported causal
-relationship between treatment and turnout.
+My estimate decreased by from .119 to .104, for a decrease of .015. This likely occurred because urban
+residence makes an individual both less likely to turnout and be successfully treated, and the original
+(biased) estimate inaccurately included some of this influence within the implied effect of treatment on
+turnout. Making this effect explicit, therefore, reduces the reported relationship between treatment and
+turnout.
 
 **c) Using the lessons from the chapter, let’s try to account for noncompliance. First, try to estimate the intent-to-treat effect (reduced form) and the compliance rate (first stage). Now divide the former by the latter to estimate the compiler average treatment effect.**
 
 It would be dangerous to estimate the effect of the treatment without accounting for noncompliance and 
 non-random assignment. To do so, I will estimate a separate complier average treatment effect (CATE)
-for urbanites and non-urbanites in the sample. Finding the CATE uses instrumental variables to account for noncompliance and estimating separate CATEs mitigates the bias produced by non-random assignment. 
+for urbanites and non-urbanites in the sample. Finding the CATE uses instrumental variables to account
+for noncompliance and estimating separate CATEs mitigates the bias produced by non-random assignment. 
 
-In practice, I will find the CATE by first identifying the "intent-to-treat" (ITT) effect, the average difference in turnout between those assigned to treatment and control, for both groups. Then I will find the proportion of compliers and divide the ITT effect by that proprortion to get an unbiased estimate of the CATE. This will be the "Wald Estimator" for both urban and non-urban groups. 
-
-Considering the urban and non-urban groups separately is possible because the sample size is adequately large. The smallest subset, urbanites in the treatment group and non-urbanites in the control, still have roughly 5,000 observations. That number is sufficient to let me compare treatment the control and treatment groups of urban and non-urban residents. 
+In practice, I will find the CATE by first identifying the "intent-to-treat" (ITT) effect, the average
+difference in turnout between those assigned to treatment and control, for both groups. Then I will find
+the proportion of compliers and divide the ITT effect by that proportion to get an unbiased estimate of
+the CATE. This implements the "Wald Estimator" for both urban and non-urban groups. All of the required
+assumptions are met--exogeneity because assignment was random, the exclusion restriction because
+assignment to treatment likely only influences turnout via the treatment, and presence of compliers
+because many subjects were successfully treated. 
 
 Note: I choose to drop those observations for whom we do not know their turnout. Dropping here is justified because, as dicussed above, attrition was likely random and unrelated to treatment status. 
 
@@ -256,26 +259,9 @@ ITT_nonurban
 
 ```
 
-The estimated intent-to-treat effects are .041 and .033 for urban and non-areas, respectively, which describe the average difference in turnout between treatment and control gorups for urban and non-urban areas. Next I estimate the proportion of compliers in each group.
-
-```{r prop compliers}
-# find the proportion of compliers for both groups
-# urban first - estimate proportion of compliers and always-takers in treatment group
-urban_compliers <- data %>% 
-  filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
-  count()/n_urban_treatment
-urban_compliers
-
-# non-urban second - estimate proportion of compliers and always-takers in treatment group
-nonurban_compliers <- data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_nonurban_treatment
-nonurban_compliers
-
-```
-
-
-The numbers above imply that the proportion of compliers for urban and non-urban areas are .753 and .566, respectively. Now we implement the Wald Estimator for both groups to find an unbiased estimate of their CATEs. 
+The estimated intent-to-treat effects are .041 and .033 for urban and non-areas, respectively, which
+describe the average difference in turnout between treatment and control groups for urban and non-urban
+areas. Next I estimate the proportion of compliers in each group.
 
 ```{r prop compliers}
 # find the proportion of compliers for both groups
@@ -293,6 +279,9 @@ nonurban_compliers
 
 ```
 
+
+The numbers above imply that the proportion of compliers for urban and non-urban areas are .753 and .777, respectively. Now we implement the Wald Estimator for both groups to find an unbiased estimate of their CATEs. 
+
 ```{r wald}
 # implement the Wald Estimator by dividing the ITT by proportion of compliers
 # urban first - divide the ITT by proportion of urban compliers
@@ -305,7 +294,10 @@ nonurban_CATE
 
 ```
 
-After implementing the Wald Estimator, we find unbiased estimates of the CATE for both urban and non-urban areas, which are .055 and .058, respectively. We now find an overall CATE for get-out-the-vote interventions by taking an average, weighted by both group's proportion in the overall sample. I calculate these proportions and take a weighted average to find a final CATE. 
+After implementing the Wald Estimator, we find unbiased estimates of the CATE for both urban and
+non-urban areas, which are .055 and .042, respectively. We now find an overall CATE for get-out-the-vote
+interventions by taking an average, weighted by both group's proportion in the overall sample. I
+calculate these proportions and take a weighted average to find a final CATE. 
 
 ```{r overall wald}
 # find proportion of urbanites in the sample
@@ -324,15 +316,28 @@ final_CATE
 
 ```
 
-The final, unbiased estimate of the CATE for get-out-the-vote interventions is 0.0561, that is, compliers were 5.6% more likely to turnout after being assigned to the treatment group. 
+The final, unbiased estimate of the CATE for get-out-the-vote interventions is 0.0483, that is,
+compliers were 4.83% more likely to turnout after being assigned to the treatment group. 
 
 **d) Think about the attrition problem. What are you implicitly assuming if you just drop the subjects for whom we don’t observe their turnout? Let’s see how their estimates change under different assumptions. Estimate the complier average treatment effect assuming that none of the subjects who attrited would have voted. What would your estimate be under the worst-case scenario for the effectiveness of GOTV? What about the best-case scenario?**
 
-If I were to drop the subjects for whom we do not observe their turnout, I would be implicitly assuming that the group that attrited was not any different from the group that did not. In other words, I would be assuming that attrition was random. 
+If I were to drop the subjects for whom we do not observe their turnout, I would be implicitly assuming
+that the group that attrited was not any different, on average, from the group overall. In other words,
+I would be assuming that attrition was random. 
 
-This is not always the case. If there are systematic differences between those who attrited and those who remained in the experiment, then dropping the former from the experiment might bias the alculated estimates of the treatment's effect. As I argued above, I do not think there is reason to worry; not knowing whether someone voted is probably a result of idiosyncratic factors like moving out of state. 
+This is not always the case. If attrition was systematically related to assignment in some unobserved
+way, then dropping the former from the experiment might bias the calculated estimates of the treatment's
+effect. As I argued above, I do not think there is reason to worry; not knowing whether someone voted is
+probably a result of idiosyncratic factors like moving out of state. 
 
-But just in case, I will estimate the treatment effect assuming that none of the subject who attrited would have voted (the base-case). I will also identify and interpret the worst- and base-case scenario. I start by imputing the missing values from the data set for each of these scenarios: in the base-case, all attrited are assumed to not vote; in the worst-case, the attrited in control are assumed to have voted and in treatment are assumed to not; in the best-case, the attrited in the control are assumed to not have voted and in treatment are assumed to have. 
+But just in case, I will estimate the treatment effect assuming that none of the subject who attrited
+would have voted (the base-case). I will also identify and interpret the worst- and base-case scenario.
+I start by imputing the missing values from the data set for each of these scenarios: in the base-case,
+all attrited are assumed to not vote; in the worst-case, the attrited in the control are assumed to have
+voted and in treatment are assumed to not; in the best-case, the attrited in the control are assumed to
+not have voted and in treatment are assumed to have. These assumptions the worst and best case
+would decrease and increase the averge difference in turnout between control and treatment,
+respectively. 
 
 ```{r modify data sets for attrition}
 # impute no voting for all attrited (the base case)
@@ -371,7 +376,15 @@ best_case_data <- control_best_case %>%
 
 ```
 
-Now, with values imputed for the base, worst, and best case of attrition, we can calculate and compare the complier average treatment across these scenarios. This will give us upper and lower bounds on the bias from attrition. 
+Now, with values imputed for the base, worst, and best case of attrition, we can calculate and compare
+the complier average treatment across these scenarios. This will give us upper and lower bounds on the
+bias from attrition. 
+
+For each group, I follow the same procedure as in part c--calculating and taking a weighted average of
+separate CATEs for urban and non-urban areas to account for non-random assignment--but with attrited
+observations assumed to have voted or not voted in each scenario. I report the resulting CATEs and then
+interpret their meaning as upper and lower bounds on the bias introduced by attrition. I start with the
+base case. 
 
 ```{r base case}
 # find the intent-to-treat effect for urban and rural groups in the base case
@@ -453,6 +466,12 @@ final_CATE_base
 
 ```
 
+The resulting overall CATE is .0486. Assuming that all attrited subjects did not vote, then compliers 
+were 4.86% more likely to vote after being assigned to treatment. This result is very similar to the 
+estimate I found in part c that did not make any assumptions about the turnout of attrited subjects. 
+This result does not help us get a sense of the extent of bias that could occur from attrition. I now 
+estimate the lower bound of negative bias by finding the CATE for the worst case scenario. 
+
 ```{r worse case}
 # find the intent-to-treat effect for urban and rural groups in the worst case
 # urban first - estimate number of urbanites in treatment group
@@ -533,6 +552,13 @@ final_CATE_worst
 
 ```
 
+The resulting overall CATE is .0414. Assuming that all attrited subjects in the control voted and
+treatment did not, then compliers were 4.14% more likely to vote after being assigned to treatment.
+Notably, this estimate is not very far off from the estimate found in part c, which suggests the
+negative bias potentially created by attrition would not be huge. This bounding procedures gives us a
+useful sense of how bad bias could be in the negative direction for our CATE. I now estimate the upper
+bound of positive bias by finding the CATE for the best case scenario. 
+
 ```{r best case}
 # find the intent-to-treat effect for urban and rural groups in the best case
 # urban first - estimate number of urbanites in treatment group
@@ -612,3 +638,9 @@ final_CATE_best <- prop_urban * urban_CATE_best + prop_nonurban * nonurban_CATE_
 final_CATE_best
 
 ```
+
+The resulting overall CATE is .0552. Assuming that all attrited subjects in the control did not vote and
+in the treatment did, then compliers were 5.52% more likely to vote after being assigned to treatment.
+Notably, this estimate is also not very far off from the estimate found in part c, which suggests the
+positive bias potentially created by attrition would not be huge. This bounding procedures gives us a
+useful sense of how bad bias could be in the positive direction for our CATE. 
