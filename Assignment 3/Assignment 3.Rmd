@@ -28,7 +28,10 @@ data <- read.csv(here("Assignment 3/GOTV_Experiment.csv"))
  
 **a) Calculate the mean value of turnout for people who did and did not receive the treatment, and interpret the implied effect of get-out-the-vote interventions on turnout. Think about the likely biases that arise from the three complications listed above. If you had to guess, would you say that you are likely over- or under-estimating the average effect with this analysis? Explain your answer.**
 
-Below I find the naive implied effect of get-out-the-vote interventions on turnout by finding the average difference in turnout between those who were and were not successfully treated. The resulting estimate, importantly, does not account for any of the complications enumerated above, except I drop those subjects who attrited to remove their missing values from calculations.
+Below I find the naive implied effect of get-out-the-vote interventions on turnout by finding the
+average difference in turnout between those who were and were not successfully treated. The resulting
+estimate, importantly, does not account for any of the complications enumerated above, except I drop
+those subjects who attrited to remove their missing values from calculations.
 
 ```{r implied effect}
 # find average turnout of those who received the treatment
@@ -50,11 +53,20 @@ implied_effect <- mean_turnout_t1 - mean_turnout_t0
 implied_effect
 ```
 
-The mean value of turnout (rounded to the nearest thousandth) for people who did and did not receive the treatment are .594 and .474, respectively, and the implied effect of the treatment is the difference between these two average, .119. This can be naitvley interpreted as the treatment, a get-out-the-vote intervention, having caused an 11.9% increase in turnout. 
+The average difference in turnout for people who did and did not receive the treatment was .119. This
+can be naitvley interpreted as the treatment, a get-out-the-vote intervention, having caused an 11.9%
+increase in turnout. 
 
-This number is likely an overestimate of the average effect of the treatment. Two of the three complications to the experiment--non-random assignment and presence of noncompliance--create baseline differences between our treatment and control groups, which biases our estimate toward overstating the effect of get-out-the-vote interventions on turnout. The third complication--attrition--does not create bias in either direction. 
+This number is likely an overestimate of the average effect of the treatment. Two of the three
+complications to the experiment--non-random assignment and presence of noncompliance--create bias and
+baseline differences between our treatment and control groups. The third complication--attrition--does
+not create bias in either direction. 
 
-The first complication--non-random assignment--makes living in an urban area a confounder because residential location influences turnout and likelihood of treatment above and beyond random assignment. I verify this below by showing that urbanites are, on average, less likely to vote and are also disproportionately assigned to the control group. (And therefore less likely to be successfully treated.) The combination of these two factors results in a positive bias that overstates the effect of the treatment. 
+The first complication--non-random assignment--makes living in an urban area a confounder because
+residential location influences turnout and likelihood of treatment above and beyond random assignment.
+Urbanites are, on average, less likely to vote and are also disproportionately assigned to the control
+group. The combination of these two factors results in a positive bias that overstates the effect of the
+treatment. 
 
 ```{r urban confounder}
 # find proprotion of urbanites in the sample
@@ -95,15 +107,10 @@ prop_nonurban_control
 
 ```
 
-Urbanites and non-urbanites represent roughly half of the sample, yet they both
-groups not equally likely to receive treatment. Of the subjects lived in an urban area, .15 and .84 were
-successfully and unsuccesfully treated, respectively, while the same subjects living outside an
-urban area were .62 and .38, respectively. It is clear that urbanites are substantially
-underrepresented in the group that was successfully treated. 
-
-Now I show that this non-random assignment creates baseline differences between those were and were not 
-successfully treated because urbanites are, on average, less likely to vote. I do this by comparing 
-voting patterns of urbanites and non-urbanites in the control group. 
+Urbanites and non-urbanites represent roughly half of the sample, yet as the numbers above show, they
+both groups not equally likely to receive treatment. This non-random assignment creates baseline
+differences between those were and were not successfully treated because urbanites are, on average, less
+likely to vote (shown below). 
 
 ```{r compare turnout}
 # find proportion of urbanites in the control group who voted
@@ -123,12 +130,9 @@ turnout_difference <- control_urban_turnout - control_nonurban_turnout
 turnout_difference
 ```
 
-Urban residents in the control group were more less likely to turn out than non-urban residents. The
-average difference in turnout was -.0611, or urbanites in the control were 6.11% less likely to turnout.
 This means that those who were successfully treated (disproportionately non-urban) were more likely 
 to turnout absent the intervention; the experiment is not comparing apples-to-oranges. As a result,
-urban residence is a confounder that creates positive bias, which results in the implied effect of GOTV
-interventions being overestimated.
+urban residence is a confounder that creates positive bias.
 
 The second complication is the presence of noncompliers. Not all people assigned to treatment were
 successfully treated. The bias created by compliance is also likely positive. We can reason that
@@ -136,10 +140,6 @@ noncompliers are less likely to turnout than compliers. Perhaps noncompliers, on
 friendly or community-oriented and so are less likely to answer their door when they hear a political
 canvasser knocking. I would wager that these characteristics are correlated with lower probabilities of
 turnout. 
-
-If this assumption holds, then the naive implied estimate of get-out-the-vote operations might be 
-an overestimation because noncompliers are (by definition) overrepresented among those did not receive
-the treatment and also systematically less likely to vote than those those who successfully received the treatment. 
 
 As such, baseline differences would be present, and noncompliance is a confounder. Those who 
 who successfully received the treatment would be, before treatment, more likley to vote which results
@@ -158,11 +158,6 @@ assignment to the treatment group is hardlly likely to make a participant move o
 would wager that attrition is random in nature and therefore does not bias our the implied effect of
 get-out-the-vote interventions. 
 
-In conclusion, it is likely that this analysis overestimates the average effect of get-out-the-vote
-efforts. While attrition likely does not contribute to bias, the other two complications, non-random
-assignment and the presence of noncompliance, both bias the estimate in a positive direction, resulting
-in an over-estimate of the treatment's effect. 
-
 **b) Using the lessons from Chapter 10, try to account for the fact that probability of treatment between urban and non-urban areas. How did you estimate your change? Why?**
 
 ```{r control urban confounder}
@@ -179,35 +174,26 @@ summary(regression_test)
 I tried accounting for the bias introduced by the unequal probability of being assigned to treatment
 between urban and non-urban areas by regressing turnout on both treatment and the "urban" variable. 
 
-This procedure controls for the bias introduced by the confounder becuase including an urban variable 
+This procedure controls for the bias introduced by the confounder because including an urban variable 
 in the regression by incorporating information about the effect of this confounder upon the outcome. 
 This improves the accuracy of the estimated relationship between the treatment and the outcome by
-holding the urban variable constant. Conceptually, when controlling for urban residence, 
-the estimated effect of the treatment becomes a weighted average of the relationship between treatment
-and outcome of interest for urbanites and non-urbanites.
+holding the urban variable constant.
 
 My estimate decreased by from .119 to .104, for a decrease of .015. This likely occurred because urban
-residence makes an individual both less likely to turnout and be successfully treated, and the original
-(biased) estimate inaccurately included some of this influence within the implied effect of treatment on
-turnout. Making this effect explicit, therefore, reduces the reported relationship between treatment and
+residence makes an individual both less likely to turnout and be successfully treated. Making this
+effect explicit, reduces the reported relationship between treatment and
 turnout.
 
 **c) Using the lessons from the chapter, let’s try to account for noncompliance. First, try to estimate the intent-to-treat effect (reduced form) and the compliance rate (first stage). Now divide the former by the latter to estimate the compiler average treatment effect.**
 
-It would be dangerous to estimate the effect of the treatment without accounting for noncompliance and 
-non-random assignment. To do so, I will estimate a separate complier average treatment effect (CATE)
+I will estimate a separate complier average treatment effect (CATE)
 for urbanites and non-urbanites in the sample. Finding the CATE uses instrumental variables to account
 for noncompliance and estimating separate CATEs mitigates the bias produced by non-random assignment. 
 
 In practice, I will find the CATE by first identifying the "intent-to-treat" (ITT) effect, the average
 difference in turnout between those assigned to treatment and control, for both groups. Then I will find
 the proportion of compliers and divide the ITT effect by that proportion to get an unbiased estimate of
-the CATE. This implements the "Wald Estimator" for both urban and non-urban groups. All of the required
-assumptions are met--exogeneity because assignment was random, the exclusion restriction because
-assignment to treatment likely only influences turnout via the treatment, and presence of compliers
-because many subjects were successfully treated. 
-
-Note: I choose to drop those observations for whom we do not know their turnout. Dropping here is justified because, as dicussed above, attrition was likely random and unrelated to treatment status. 
+the CATE. This implements the "Wald Estimator" for both urban and non-urban groups. I choose to drop those observations for whom we do not know their turnout. 
 
 ```{r ITT}
 # find the intent-to-treat effect for both groups
@@ -280,7 +266,9 @@ nonurban_compliers
 ```
 
 
-The numbers above imply that the proportion of compliers for urban and non-urban areas are .753 and .777, respectively. Now we implement the Wald Estimator for both groups to find an unbiased estimate of their CATEs. 
+The numbers above imply that the proportion of compliers for urban and non-urban areas are .753 
+.777, respectively. Now we implement the Wald Estimator for both groups to find an unbiased estimate of
+their CATEs. 
 
 ```{r wald}
 # implement the Wald Estimator by dividing the ITT by proportion of compliers
@@ -323,21 +311,16 @@ compliers were 4.83% more likely to turnout after being assigned to the treatmen
 
 If I were to drop the subjects for whom we do not observe their turnout, I would be implicitly assuming
 that the group that attrited was not any different, on average, from the group overall. In other words,
-I would be assuming that attrition was random. 
+I would be assuming that attrition was random. This is not always the case. If attrition was
+systematically related to assignment in some unobserved way, then dropping the former from the
+experiment might bias the calculated estimates of the treatment'seffect. 
 
-This is not always the case. If attrition was systematically related to assignment in some unobserved
-way, then dropping the former from the experiment might bias the calculated estimates of the treatment's
-effect. As I argued above, I do not think there is reason to worry; not knowing whether someone voted is
-probably a result of idiosyncratic factors like moving out of state. 
-
-But just in case, I will estimate the treatment effect assuming that none of the subject who attrited
+Just in case, I will estimate the treatment effect assuming that none of the subject who attrited
 would have voted (the base-case). I will also identify and interpret the worst- and base-case scenario.
 I start by imputing the missing values from the data set for each of these scenarios: in the base-case,
 all attrited are assumed to not vote; in the worst-case, the attrited in the control are assumed to have
 voted and in treatment are assumed to not; in the best-case, the attrited in the control are assumed to
-not have voted and in treatment are assumed to have. These assumptions the worst and best case
-would decrease and increase the averge difference in turnout between control and treatment,
-respectively. 
+not have voted and in treatment are assumed to have. 
 
 ```{r modify data sets for attrition}
 # impute no voting for all attrited (the base case)
@@ -378,13 +361,8 @@ best_case_data <- control_best_case %>%
 
 Now, with values imputed for the base, worst, and best case of attrition, we can calculate and compare
 the complier average treatment across these scenarios. This will give us upper and lower bounds on the
-bias from attrition. 
-
-For each group, I follow the same procedure as in part c--calculating and taking a weighted average of
-separate CATEs for urban and non-urban areas to account for non-random assignment--but with attrited
-observations assumed to have voted or not voted in each scenario. I report the resulting CATEs and then
-interpret their meaning as upper and lower bounds on the bias introduced by attrition. I start with the
-base case. 
+bias from attrition. For each group, I follow the same procedure as in part and report the resulting
+CATEs and then interpret their meaning as upper and lower bounds on the bias introduced by attrition. 
 
 ```{r base case}
 # find the intent-to-treat effect for urban and rural groups in the base case
@@ -468,9 +446,8 @@ final_CATE_base
 
 The resulting overall CATE is .0486. Assuming that all attrited subjects did not vote, then compliers 
 were 4.86% more likely to vote after being assigned to treatment. This result is very similar to the 
-estimate I found in part c that did not make any assumptions about the turnout of attrited subjects. 
-This result does not help us get a sense of the extent of bias that could occur from attrition. I now 
-estimate the lower bound of negative bias by finding the CATE for the worst case scenario. 
+estimate I found in part c and so does not help us get a sense of the extent of bias that could occur
+from attrition. I now estimate the lower bound of CATE.
 
 ```{r worse case}
 # find the intent-to-treat effect for urban and rural groups in the worst case
