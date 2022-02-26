@@ -28,6 +28,8 @@ data <- read.csv(here("Assignment 3/GOTV_Experiment.csv"))
  
 **a) Calculate the mean value of turnout for people who did and did not receive the treatment, and interpret the implied effect of get-out-the-vote interventions on turnout. Think about the likely biases that arise from the three complications listed above. If you had to guess, would you say that you are likely over- or under-estimating the average effect with this analysis? Explain your answer.**
 
+Below I find the naive implied effect of get-out-the-vote interventions on turnout by finding the average difference in turnout between those who were and were not successfully treated. The resulting estimate, importantly, does not account for any of the complications enumerated above, except I drop those subjects who attrited to remove their missing values from calculations.
+
 ```{r implied effect}
 # find average turnout of those who received the treatment
 mean_turnout_t1 <- data %>% 
@@ -48,11 +50,11 @@ implied_effect <- mean_turnout_t1 - mean_turnout_t0
 implied_effect
 ```
 
-The mean value of turnout (rounded to the nearest thousandth) for people hwo did and did not receive the treatment are .594 and .474, respectively, and the implied effect of the treatment is the difference between these two averages. From this estimate, the implied effect of get-out-the-vote interventions on turnaround is .119. That is, the get-out-the-vote intervention is interpreted to have caused an 11.9% increase in turnout from between the treatment and control groups. 
+The mean value of turnout (rounded to the nearest thousandth) for people who did and did not receive the treatment are .594 and .474, respectively, and the implied effect of the treatment is the difference between these two average, .119. This can be naitvley interpreted as the treatment, a get-out-the-vote intervention, having caused an 11.9% increase in turnout. 
 
-This number is likely an overestimate of the average effect of the treatment. The three complications to the experiment--differing probabilities of assignment between urban and non-urban areas, presence of noncompliance, and attrition in the sample--all create baseline differences between our treatment and control groups, which biases our estimate of the average effect in a positive directions. As a result, the number found above likely overestimates the magnitude of the effect of get-out-the-vote interventions on turnout. 
+This number is likely an overestimate of the average effect of the treatment. Two of the three complications to the experiment--non-random assignment and presence of noncompliance--create baseline differences between our treatment and control groups, which biases our estimate toward overstating the effect of get-out-the-vote interventions on turnout. The third complication--attrition--does not create bias in either direction. 
 
-The first complication makes living in an urban area a confounder because residential location influences likelihood of treatment and outcome above and beyond random assignment of treatment into one of those states. We can verify this by finding comparing a) probabilities of urbanites and non-urbanites of being assigned into the treatment or control group and b) the average likelihood of these two groups to turnout in the control group. 
+The first complication--non-random assignment--makes living in an urban area a confounder because residential location influences turnout and likelihood of treatment above and beyond random assignment. I verify this below by showing that urbanites are, on average, less likely to vote and are also disproportionately assigned to the control group. (And therefore less likely to be successfully treated.) The combination of these two factors results in a positive bias that overstates the effect of the treatment. 
 
 ```{r urban confounder}
 # find proprotion of urbanites in the sample
@@ -67,43 +69,44 @@ prop_nonurban <- data %>%
   count()/50000
 prop_nonurban
 
-# find proportion of urbanites in the treatment group
+# find proportion of urbanites who were successfully treated
 prop_urban_treat <- data %>% 
-  filter(urban == 1 & treatmentattempt == 1) %>% 
-  count()/25099
+  filter(urban == 1 & successfultreatment == 1) %>% 
+  count()/24875
 prop_urban_treat 
 
-# find proportion of urbanites in the control group
+# find proportion of urbanites who were not successfully treated
 prop_urban_control <- data %>% 
-  filter(urban == 1 & treatmentattempt == 0) %>% 
-  count()/25099
+  filter(urban == 1 & successfultreatment == 0) %>% 
+  count()/24875
 prop_urban_control 
 
-# find proportion of non-urbanites in the treatment group
+# find proportion of non-urbanites who were successfully treated
 prop_nonurban_treat <- data %>% 
-  filter(urban == 0 & treatmentattempt == 1) %>% 
-  count()/25099
+  filter(urban == 0 & successfultreatment == 1) %>% 
+  count()/25125
 prop_nonurban_treat 
 
-# find proportion of non-urbanites in the control group
+# find proportion of non-urbanites who were not successfully treated
 prop_nonurban_control <- data %>% 
-  filter(urban == 0 & treatmentattempt == 0) %>% 
-  count()/25099
+  filter(urban == 0 & successfultreatment == 0) %>% 
+  count()/25125
 prop_nonurban_control
 
 ```
 
-From the analysis above, urbanites and non-urbanites represent roughly half of the sample, yet they both
-groups not equally present in similar proprotions within the control and sample. Given that an 
-observation lived in an urban area, the probability of being assigned to the treatment and control 
-groups were .199 and .792, respectively, while the same of an observation living outside an urban area 
-was .801 and .201, respectively. Therefore, urbanites are substantially underrepresented in the
-treatment group overrepresented in the control group. 
+Urbanites and non-urbanites represent roughly half of the sample, yet they both
+groups not equally likely to receive treatment. Of the subjects lived in an urban area, .15 and .84 were
+successfully and unsuccesfully treated, respectively, while the same subjects living outside an
+urban area were .62 and .38, respectively. It is clear that urbanites are substantially
+underrepresented in the group that was successfully treated. 
 
-Now, to figure out whether being in an urban area is associated with greater likelihood to vote, we can compare turnout between urbanites and non-urbanites in the control.
+Now I show that this non-random assignment creates baseline differences between those were and were not 
+successfully treated because urbanites are, on average, less likely to vote. I do this by comparing 
+voting patterns of urbanites and non-urbanites in the control group. 
 
 ```{r compare turnout}
-# find proportion of urbanites in control who voted
+# find proportion of urbanites in the control group who voted
 control_urban_turnout <- data %>% 
   filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
   count()/19868
@@ -120,85 +123,43 @@ turnout_difference <- control_urban_turnout - control_nonurban_turnout
 turnout_difference
 ```
 
-After conducting this comparison, it clear is that non-urban residents in the control group were more
-likely to turn out than urban residents. More specifically, the average difference in turnout was
--.0611, or urbanites in the control were 6.11% less likely to turnout absent the intervention. Normally,
-this difference wouldn't be a problem because randomization would guarantee that, in expectation,
-such differences would be spread evenly on average between the treatment and control. 
-
-However, assignment was not random. Being an urbanite made a given observation substantially less likely
-to be assigned to the treatment group. In addition, urbanites are less likely to turnout. The
-combination of these facts means there are baseline differences present; the experiment is not comparing
-apples-to-oranges. 
-
-As a result, "urban" is a confounder, which results in the implied effect of
-get-out-the-vote interventions being overestimated. This bias occurs because the sign of the 
-confounder's influence on treatment and likelihood are both negative. Living in an urban area means 
-observations in that group were both less likely to be in the treatment group and less likely to vote,
-which biases our results toward an overestimation of the result.
+Urban residents in the control group were more less likely to turn out than non-urban residents. The
+average difference in turnout was -.0611, or urbanites in the control were 6.11% less likely to turnout.
+This means that those who were successfully treated (disproportionately non-urban) were more likely 
+to turnout absent the intervention; the experiment is not comparing apples-to-oranges. As a result,
+urban residence is a confounder that creates positive bias, which results in the implied effect of GOTV
+interventions being overestimated.
 
 The second complication is the presence of noncompliers. Not all people assigned to treatment were
-successfully treated. This is hard to empirically assess because comparing the turnout of noncompliers
-(who where assigned to treatment) and the same of the control group is not apples-to-apples. 
-
-However, we can reason that noncompliers are less likely to turnout than compliers. Perhaps 
-noncompliers, on  average, are less friendly or community-oriented and so are less liley to answer their
-door when they hearing a political canvasser knocking. I would wager that these characteristics are 
-correlated with lower probabilities of turnout. 
+successfully treated. The bias created by compliance is also likely positive. We can reason that
+noncompliers are less likely to turnout than compliers. Perhaps noncompliers, on  average, are less 
+friendly or community-oriented and so are less likely to answer their door when they hear a political
+canvasser knocking. I would wager that these characteristics are correlated with lower probabilities of
+turnout. 
 
 If this assumption holds, then the naive implied estimate of get-out-the-vote operations might be 
-an overestimation because noncompliers, who we assume are less likley to turnout, are present in the 
-control group but not the treatment. Therefore, baseline differences are present, and the resulting bias
-bias is positive because being a noncomplier reduces the probability that observations in this group are
-assigned to the treatment and will turnout. 
+an overestimation because noncompliers are (by definition) overrepresented among those did not receive
+the treatment and also systematically less likely to vote than those those who successfully received the treatment. 
 
-In other words, noncompliance is a confounder, and the sign of its influence upon both treatment and 
-the outcome are negative, which means it would positively bias our naive estimate. Noncompliance results
+As such, baseline differences would be present, and noncompliance is a confounder. Those who 
+who successfully received the treatment would be, before treatment, more likley to vote which results
 in an overestimation of the effect of get-out-the-vote interventions. 
 
 The third complication is attrition. Many of the observations in both the control and the treatment 
 groups attrited from the sample, that is, whether they voted could not be ascertained perhaps because
 they moved out of state, died, or mysteriously vanished. Crucially, whether or not this attrition biases
-the implied effect of get-out-the-vote interventions dependson the nature of the attrition. If attrition
-occured at random (i.e., is unrelated to the treatment of potential outcome), then attrition does not
-bias our estimate (just reduces the sample size). 
+the implied effect of get-out-the-vote interventions depends on the nature of the attrition. If 
+attrition occurred at random (i.e., is unrelated to assigmnment), then attrition does not bias our
+estimate (only reduces our sample size). 
 
-I do not think there are strong reasons to believe attrition is systematically treatment or outcome of
-interest. The hypothetical reasons enumerated above are rather idiosyncratic; assignment to the
-treatment group is hardlly likely to make a participant move out of state. As such, I would wager that
-attrition was random in nature and therefore does not bias our the implied effect of get-out-the-vote
-interventions. 
-
-Briefly, we can confirm this hypothesis by testing whether rates of attrition were significantly higher
-in either the treatment or control group. 
-
-```{r attrition}
-# find proportion of attrited sample assigned to treatment
-prop_attrited_treat <- data %>% 
-  filter(treatmentattempt == 1 & is.na(turnout)) %>% 
-  count()/25099
-prop_attrited_treat
-
-# find proportion of attrited sample assigned to control
-prop_attrited_control <- data %>% 
-  filter(treatmentattempt == 0 & is.na(turnout)) %>% 
-  count()/24901
-prop_attrited_control
-
-# find the difference of average attrition between treatment and control
-attrition_diff <- prop_attrited_treat - prop_attrited_control
-attrition_diff
-```
-
-From the analysis above, it is likely that attrition was random and unrelated to assignment to treatment
-or control groups. The difference in average attrition between the two groups, at less than .0001, is
-minuscule. Assuming a null hypothesis of no rleationship between attrition and assignment, even without
-formal calculation of a p-value, it is very unlikely that the null could be rejected. Thus, we have
-strong evidence that attrition was random, which mean it does not contribute to baseline differences
-between the two groups. 
+I do not think there are strong reasons to believe attrition systematically more likely to occur because
+of assignment to be treated. The hypothetical reasons enumerated above are rather idiosyncratic;
+assignment to the treatment group is hardlly likely to make a participant move out of state. As such, I 
+would wager that attrition is random in nature and therefore does not bias our the implied effect of
+get-out-the-vote interventions. 
 
 In conclusion, it is likely that this analysis overestimates the average effect of get-out-the-vote
-efforts. While attribution likely does not contribute to bias, the other two complications, non-random
+efforts. While attrition likely does not contribute to bias, the other two complications, non-random
 assignment and the presence of noncompliance, both bias the estimate in a positive direction, resulting
 in an over-estimate of the treatment's effect. 
 
@@ -326,7 +287,7 @@ urban_compliers
 
 # non-urban second - estimate proportion of compliers and always-takers in treatment group
 nonurban_compliers <- data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
+  filter(urban == 0 & treatmentattempt == 1 & successfultreatment == 1) %>% 
   count()/n_nonurban_treatment
 nonurban_compliers
 
@@ -344,11 +305,21 @@ nonurban_CATE
 
 ```
 
-After implementing the Wald Estimator, we find unbiased estimates of the CATE for both urban and non-urban areas, which are .055 and .058, respectively. We now find an overall CATE for get-out-the-vote interventions by taking an average, weighted by which area had more variation in the treatment group. Since there was equal roughly variation in the treatment group for urban and non-urban voters, we take a simple average of the two. 
+After implementing the Wald Estimator, we find unbiased estimates of the CATE for both urban and non-urban areas, which are .055 and .058, respectively. We now find an overall CATE for get-out-the-vote interventions by taking an average, weighted by both group's proportion in the overall sample. I calculate these proportions and take a weighted average to find a final CATE. 
 
 ```{r overall wald}
-# average the two unbiased esitmates of CATE
-final_CATE <- (urban_CATE + nonurban_CATE)/2
+# find proportion of urbanites in the sample
+prop_urban <- data %>% 
+  filter(urban == 1) %>% 
+  count()/50000
+
+# find proportion of non-urbanites in the sample
+prop_nonurban <- data %>% 
+  filter(urban == 0) %>% 
+  count()/50000
+
+# weight average the two unbiased estimates of CATE
+final_CATE <- prop_urban * urban_CATE + prop_nonurban * nonurban_CATE
 final_CATE
 
 ```
@@ -359,25 +330,25 @@ The final, unbiased estimate of the CATE for get-out-the-vote interventions is 0
 
 If I were to drop the subjects for whom we do not observe their turnout, I would be implicitly assuming that the group that attrited was not any different from the group that did not. In other words, I would be assuming that attrition was random. 
 
-This is not always the case. If there are systematic differences between those who attrited and those who remained in the experiment, then dropping the former from the experiment might bias calculated estimates of the treatment's effect. As I argued above, I do not think there is reason to worry; not knowing whether someone voted is probably a result of idiosyncratic factors like moving out of state. 
+This is not always the case. If there are systematic differences between those who attrited and those who remained in the experiment, then dropping the former from the experiment might bias the alculated estimates of the treatment's effect. As I argued above, I do not think there is reason to worry; not knowing whether someone voted is probably a result of idiosyncratic factors like moving out of state. 
 
-But just in case, I will estimate the treatment effect assuming that none of the subject who attrited would have voted (the base-case). I will also identify and interpret the worst- and base-case scenario. I start by imputing the missing values from the data set for each of these scenarios: base-case all attrited are assumed to not vote; worst-case the attrited in control are assumed to have voted and in treatment are assumed to not; best-case the attrited in control are assumed to not have voted and in treatment are assumed to have. 
+But just in case, I will estimate the treatment effect assuming that none of the subject who attrited would have voted (the base-case). I will also identify and interpret the worst- and base-case scenario. I start by imputing the missing values from the data set for each of these scenarios: in the base-case, all attrited are assumed to not vote; in the worst-case, the attrited in control are assumed to have voted and in treatment are assumed to not; in the best-case, the attrited in the control are assumed to not have voted and in treatment are assumed to have. 
 
 ```{r modify data sets for attrition}
 # impute no voting for all attrited (the base case)
 base_case_data <- data %>% 
-  mutate(turnout = replace_na(0))
+  mutate(turnout = replace_na(turnout, 0))
 
 # impute all voting for attrited in control and no voting in treatment (the worst case)
 # replace all missing values of turnout in control with 1
 control_worst_case <- data %>% 
   filter(treatmentattempt == 0) %>% 
-  mutate(turnout = replace_na(1))
+  mutate(turnout = replace_na(turnout, 1))
 
 # replace all missing values of turnout in control with 0 
 treatment_worst_case <- data %>% 
   filter(treatmentattempt == 1) %>% 
-  mutate(turnout = replace_na(0))
+  mutate(turnout = replace_na(turnout, 0))
 
 # rejoin the two data sets
 worst_case_data <- control_worst_case %>% 
@@ -387,12 +358,12 @@ worst_case_data <- control_worst_case %>%
 # replace all missing values of turnout in control with 0
 control_best_case <- data %>% 
   filter(treatmentattempt == 0) %>% 
-  mutate(turnout = replace_na(0))
+  mutate(turnout = replace_na(turnout, 0))
 
 # replace all missing values of turnout in control with 1 
 treatment_best_case <- data %>% 
   filter(treatmentattempt == 1) %>% 
-  mutate(turnout = replace_na(1))
+  mutate(turnout = replace_na(turnout, 1))
 
 # rejoin the two data sets
 best_case_data <- control_best_case %>% 
@@ -400,51 +371,55 @@ best_case_data <- control_best_case %>%
 
 ```
 
-Now, with values imputed for the base, worst, and best case senarios of attrition, we can calcuate and compare the complier average treatment. This will give us upper and lower bounds on the extent and direction of bias from attrition. 
+Now, with values imputed for the base, worst, and best case of attrition, we can calculate and compare the complier average treatment across these scenarios. This will give us upper and lower bounds on the bias from attrition. 
 
 ```{r base case}
-# find the intent-to-treat effect for both groups
+# find the intent-to-treat effect for urban and rural groups in the base case
 # urban first - estimate number of urbanites in treatment group
-n_urban_treatment_base <- base_case_data %>% 
+urban_treatment_base <- base_case_data %>% 
   filter(urban == 1 & treatmentattempt == 1) %>% 
   count()
+urban_treatment_base
 
 # estimate number of urbanites in control group
-n_urban_control_base <- base_case_data %>% 
+urban_control_base <- base_case_data %>% 
   filter(urban == 1 & treatmentattempt == 0) %>% 
   count()
+urban_control_base
 
 # find average turnout for control and treatment groups
 urban_turnout_treatment_base <- base_case_data %>% 
   filter(urban == 1 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_urban_treatment_base
+  count()/urban_treatment_base
 
 urban_turnout_control_base <- base_case_data %>% 
   filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
-  count()/n_urban_control_base
+  count()/urban_control_base
 
 # find the average difference in turnout for treatment and control groups
 ITT_urban_base <- urban_turnout_treatment_base - urban_turnout_control_base
 ITT_urban_base
 
-# non-urban second - estimate number of non-attrited non-urban residents in treatment group
-n_nonurban_treatment_base <- base_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+# non-urban second - estimate number of non-urban residents in treatment group
+nonurban_treatment_base <- base_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1) %>% 
   count()
+nonurban_treatment_base
 
-# estimate number of non-attrited non-urban residents in treatment group
-n_nonurban_control_base <- base_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+# estimate number of non-urban residents in treatment group
+nonurban_control_base <- base_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0) %>% 
   count()
+nonurban_control_base
 
 # find average turnout for control and treatment groups
 nonurban_turnout_treatment_base <- base_case_data %>% 
   filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_nonurban_treatment_base
+  count()/nonurban_treatment_base
 
 nonurban_turnout_control_base <- base_case_data %>% 
   filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
-  count()/n_nonurban_control_base
+  count()/nonurban_control_base
 
 # find the average difference in turnout for treatment and control groups
 ITT_nonurban_base <- nonurban_turnout_treatment_base - nonurban_turnout_control_base
@@ -454,13 +429,13 @@ ITT_nonurban_base
 # urban first - estimate proportion of compliers and always-takers in treatment group
 urban_compliers_base <- base_case_data %>% 
   filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
-  count()/n_urban_treatment_base
+  count()/urban_treatment_base
 urban_compliers_base
 
 # non-urban second - estimate proportion of compliers and always-takers in treatment group
 nonurban_compliers_base <- base_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_nonurban_treatment_base
+  filter(urban == 0 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/nonurban_treatment_base
 nonurban_compliers_base
 
 # implement the Wald Estimator by dividing the ITT by proportion of compliers
@@ -472,54 +447,59 @@ urban_CATE_base
 nonurban_CATE_base <- ITT_nonurban_base/nonurban_compliers_base
 nonurban_CATE_base
 
-# average the two unbiased esitmates of CATE
-final_CATE_base <- (urban_CATE_base + nonurban_CATE_base)/2
+# weight average the two unbiased estimates of CATE
+final_CATE_base <- prop_urban * urban_CATE_base + prop_nonurban * nonurban_CATE_base
 final_CATE_base
+
 ```
 
-```{r worst case}
-# find the intent-to-treat effect for both groups
-# urban first - estimate number of non-attrited urbanites in treatment group
-n_urban_treatment_worst <- worst_case_data %>% 
-  filter(urban == 1 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+```{r worse case}
+# find the intent-to-treat effect for urban and rural groups in the worst case
+# urban first - estimate number of urbanites in treatment group
+urban_treatment_worst <- worst_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1) %>% 
   count()
+urban_treatment_worst
 
-# estimate number of non-attrited urbanites in control group
-n_urban_control_worst <- worst_case_data %>% 
-  filter(urban == 1 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+# estimate number of urbanites in control group
+urban_control_worst <- worst_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0) %>% 
   count()
+urban_control_worst
 
 # find average turnout for control and treatment groups
 urban_turnout_treatment_worst <- worst_case_data %>% 
   filter(urban == 1 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_urban_treatment_worst
+  count()/urban_treatment_worst
 
 urban_turnout_control_worst <- worst_case_data %>% 
   filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
-  count()/n_urban_control_worst
+  count()/urban_control_worst
 
 # find the average difference in turnout for treatment and control groups
 ITT_urban_worst <- urban_turnout_treatment_worst - urban_turnout_control_worst
 ITT_urban_worst
 
-# non-urban second - estimate number of non-attrited non-urban residents in treatment group
-n_nonurban_treatment_worst <- worst_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+# non-urban second - estimate number of non-urban residents in treatment group
+nonurban_treatment_worst <- worst_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1) %>% 
   count()
+nonurban_treatment_worst
 
-# estimate number of non-attrited non-urban residents in treatment group
-n_nonurban_control_worst <- worst_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+# estimate number of non-urban residents in treatment group
+nonurban_control_worst <- worst_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0) %>% 
   count()
+nonurban_control_worst
 
 # find average turnout for control and treatment groups
 nonurban_turnout_treatment_worst <- worst_case_data %>% 
   filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_nonurban_treatment
+  count()/nonurban_treatment_worst
 
 nonurban_turnout_control_worst <- worst_case_data %>% 
   filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
-  count()/n_nonurban_control
+  count()/nonurban_control_worst
 
 # find the average difference in turnout for treatment and control groups
 ITT_nonurban_worst <- nonurban_turnout_treatment_worst - nonurban_turnout_control_worst
@@ -529,13 +509,13 @@ ITT_nonurban_worst
 # urban first - estimate proportion of compliers and always-takers in treatment group
 urban_compliers_worst <- worst_case_data %>% 
   filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
-  count()/n_urban_treatment_worst
+  count()/urban_treatment_worst
 urban_compliers_worst
 
 # non-urban second - estimate proportion of compliers and always-takers in treatment group
 nonurban_compliers_worst <- worst_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_nonurban_treatment_worst
+  filter(urban == 0 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/nonurban_treatment_worst
 nonurban_compliers_worst
 
 # implement the Wald Estimator by dividing the ITT by proportion of compliers
@@ -547,56 +527,59 @@ urban_CATE_worst
 nonurban_CATE_worst <- ITT_nonurban_worst/nonurban_compliers_worst
 nonurban_CATE_worst
 
-# average the two unbiased esitmates of CATE
-final_CATE_worst <- (urban_CATE_worst + nonurban_CATE_worst)/2
+# weight average the two unbiased estimates of CATE
+final_CATE_worst <- prop_urban * urban_CATE_worst + prop_nonurban * nonurban_CATE_worst
 final_CATE_worst
+
 ```
 
-
 ```{r best case}
-
-# find the intent-to-treat effect for both groups
-# urban first - estimate number of non-attrited urbanites in treatment group
-n_urban_treatment_best <- best_case_data %>% 
-  filter(urban == 1 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+# find the intent-to-treat effect for urban and rural groups in the best case
+# urban first - estimate number of urbanites in treatment group
+urban_treatment_best <- best_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 1) %>% 
   count()
+urban_treatment_best
 
-# estimate number of non-attrited urbanites in control group
-n_urban_control_best <- best_case_data %>% 
-  filter(urban == 1 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+# estimate number of urbanites in control group
+urban_control_best <- best_case_data %>% 
+  filter(urban == 1 & treatmentattempt == 0) %>% 
   count()
+urban_control_best
 
 # find average turnout for control and treatment groups
 urban_turnout_treatment_best <- best_case_data %>% 
   filter(urban == 1 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_urban_treatment_best
+  count()/urban_treatment_best
 
 urban_turnout_control_best <- best_case_data %>% 
   filter(urban == 1 & treatmentattempt == 0 & turnout == 1) %>% 
-  count()/n_urban_control_best
+  count()/urban_control_best
 
 # find the average difference in turnout for treatment and control groups
 ITT_urban_best <- urban_turnout_treatment_best - urban_turnout_control_best
 ITT_urban_best
 
-# non-urban second - estimate number of non-attrited non-urban residents in treatment group
-n_nonurban_treatment_best <- best_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & is.na(turnout) != 1) %>% 
+# non-urban second - estimate number of non-urban residents in treatment group
+nonurban_treatment_best <- best_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 1) %>% 
   count()
+nonurban_treatment_best
 
-# estimate number of non-attrited non-urban residents in treatment group
-n_nonurban_control_best <- best_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 0 & is.na(turnout) != 1) %>% 
+# estimate number of non-urban residents in treatment group
+nonurban_control_best <- best_case_data %>% 
+  filter(urban == 0 & treatmentattempt == 0) %>% 
   count()
+nonurban_control_best
 
 # find average turnout for control and treatment groups
 nonurban_turnout_treatment_best <- best_case_data %>% 
   filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_nonurban_treatment_best
+  count()/nonurban_treatment_best
 
 nonurban_turnout_control_best <- best_case_data %>% 
   filter(urban == 0 & treatmentattempt == 0 & turnout == 1) %>% 
-  count()/n_nonurban_control_best
+  count()/nonurban_control_best
 
 # find the average difference in turnout for treatment and control groups
 ITT_nonurban_best <- nonurban_turnout_treatment_best - nonurban_turnout_control_best
@@ -606,13 +589,13 @@ ITT_nonurban_best
 # urban first - estimate proportion of compliers and always-takers in treatment group
 urban_compliers_best <- best_case_data %>% 
   filter(urban == 1 & treatmentattempt == 1 & successfultreatment == 1) %>% 
-  count()/n_urban_treatment_best
+  count()/urban_treatment_best
 urban_compliers_best
 
 # non-urban second - estimate proportion of compliers and always-takers in treatment group
 nonurban_compliers_best <- best_case_data %>% 
-  filter(urban == 0 & treatmentattempt == 1 & turnout == 1) %>% 
-  count()/n_nonurban_treatment_best
+  filter(urban == 0 & treatmentattempt == 1 & successfultreatment == 1) %>% 
+  count()/nonurban_treatment_best
 nonurban_compliers_best
 
 # implement the Wald Estimator by dividing the ITT by proportion of compliers
@@ -624,7 +607,8 @@ urban_CATE_best
 nonurban_CATE_best <- ITT_nonurban_best/nonurban_compliers_best
 nonurban_CATE_best
 
-# average the two unbiased esitmates of CATE
-final_CATE_best <- (urban_CATE_best + nonurban_CATE_best)/2
+# weight average the two unbiased estimates of CATE
+final_CATE_best <- prop_urban * urban_CATE_best + prop_nonurban * nonurban_CATE_best
 final_CATE_best
+
 ```
